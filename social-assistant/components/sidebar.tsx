@@ -9,10 +9,13 @@ const montserrat = Montserrat({ weight: "600", subsets: ["latin"] });
 
 const routes = [
     { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard", color: "text-sky-500" },
-    { label: "Suggest Video Ideas", icon: MessageCircleQuestion, href: "/suggest-ideas", color: "text-violet-500" },
-    { label: "Suggest Channels", icon: MessageCircleQuestion, href: "/suggest-channels", color: "text-orange-500" },
-    { label: "Channel Matches", icon: Youtube, href: "/match-with-channels", color: "text-pink-600" },
-    { label: "Chat Groups", icon: MessageCircle, href: "/chat-groups", color: "text-green-400" },
+    { label: "Suggest Channels With Hashtags", icon: MessageCircleQuestion, href: "/suggest-channels-with-hashtags", color: "text-violet-500" },
+    { label: "Suggest Channels With Channel Links", icon: MessageCircleQuestion, href: "/suggest-channels-with-channel-url", color: "text-orange-500" },
+    { label: "Suggest Channels With Video Links", icon: MessageCircleQuestion, href: "/suggest-channels-with-video-url", color: "text-blue-500" },
+    { label: "Suggest Video Ideas With Hashtags", icon: MessageCircleQuestion, href: "/suggest-video-ideas-with-hashtags", color: "text-pink-500" },
+    { label: "Suggest Video Ideas With Channel Links", icon: MessageCircleQuestion, href: "/suggest-video-ideas-with-channel-url", color: "text-green-500" },
+    { label: "Suggest Video Ideas With Video Links", icon: MessageCircleQuestion, href: "/suggest-video-ideas-with-video-url", color: "text-yellow-500" },
+    
     { label: "Settings", icon: SettingsIcon, href: "/settings", color: "text-gray-400" },
 ];
 
