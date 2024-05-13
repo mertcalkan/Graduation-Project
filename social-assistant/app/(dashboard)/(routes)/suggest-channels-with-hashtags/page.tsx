@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { Heading } from "@/components/heading";
 import { Filter } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
-
+import {FilterChannelSearch}  from "@/components/filterDialog";
 const TagsInput = ({ tags, setTags, handleSearch }) => {
   const [inputValue, setInputValue] = useState("");
 
@@ -24,6 +24,7 @@ const TagsInput = ({ tags, setTags, handleSearch }) => {
       const newTags = [...tags];
       newTags.pop();
       setTags(newTags);
+      setError("");
     }
   };
 
@@ -137,11 +138,13 @@ const SuggestChannelsWithHashtags = () => {
             <Filter size={20} />
           </button>
         </div>
+        
         <TagsInput tags={tags} setTags={setTags} handleSearch={handleSearch} />
       </div>
+      
       {showFilters && (
         <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-gray-800 bg-opacity-50">
-          {/* Filters go here */}
+         && <FilterChannelSearch handleApplyFilters={handleApplyFilters} toggleFilters={toggleFilters} />
         </div>
       )}
       {loading && (
@@ -156,10 +159,11 @@ const SuggestChannelsWithHashtags = () => {
       )}
       <div className="grid grid-cols-3 gap-4 mt-4">
         {searchResults.map((result, index) => (
-          <div key={index} className="border p-4">
+          <div  key={index} className="border p-4 ml-8 mr-8 ">
+              <img src={result.thumbnail} alt="Thumbnail" className="mt-2" />
             <h3 className="text-lg font-semibold">{result.title}</h3>
             <p className="text-gray-600">{result.description}</p>
-            <img src={result.thumbnail} alt="Thumbnail" className="mt-2" />
+          
           </div>
         ))}
       </div>
@@ -174,6 +178,7 @@ const SuggestChannelsWithHashtags = () => {
         </div>
       )}
     </div>
+    
   );
 };
 
