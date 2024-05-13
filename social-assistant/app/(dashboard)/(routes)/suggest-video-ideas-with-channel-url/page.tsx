@@ -2,7 +2,7 @@
 "use client"
 import React, { useState } from "react";
 import { Heading } from "@/components/heading";
-import { Filter ,MessageCircleQuestion} from "lucide-react";
+import { Filter } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import {FilterChannelSearch}  from "@/components/filterDialog";
 const TagsInput = ({ tags, setTags, handleSearch }) => {
@@ -120,11 +120,11 @@ const SuggestChannelsWithHashtags = () => {
   return (
     <div>
       <Heading
-        title="Suggest Channels With Hashtags"
-        description="You can have a look YouTube channels based on your hashtag(s) criteria."
-        icon={MessageCircleQuestion}
-        iconColor="text-violet-500"
-        bgColor="bg-violet-500/10"
+        title="Suggest Channel"
+        description="You can have a look YouTube channels based on your criterias like hashtags, keywords, similar YouTubers etc."
+        icon={Filter}
+        iconColor="text-orange-500"
+        bgColor="bg-orange-500/10"
       />
       <div className="app px-8 py-8">
         <div className="flex items-center">
