@@ -1,67 +1,31 @@
-import React, { useState } from "react";
+"use client"
+import React, { useState } from 'react';
 
-const FilterChannelSearch = ({
-  handleApplyFilters,
-  toggleFilters,
-  minSubscribers,
-  maxSubscribers,
-  minVideos,
-  maxVideos,
-}) => {
-  const [searchType, setSearchType] = useState("channel");
-  const [subscriberRange, setSubscriberRange] = useState("0-1000");
-  const [videoCountRange, setVideoCountRange] = useState("0-1000");
-  const [channelCount, setChannelCount] = useState("");
-
-  const handleApplyFiltersClick = () => {
-    handleApplyFilters({
-      searchType,
-      subscriberRange,
-      minSubscribers,
-      maxSubscribers,
-      videoCountRange,
-      minVideos,
-      maxVideos,
-      channelCount,
-    });
-  };
+const FilterVideoIdeasSearch = ({ handleApplyFilters, toggleFilters }) => {
+  const [searchType, setSearchType] = useState('channel');
+  const [subscriberRange, setSubscriberRange] = useState('0-1000');
+  const [minSubscribers, setMinSubscribers] = useState('');
+  const [maxSubscribers, setMaxSubscribers] = useState('');
+  const [videoCountRange, setVideoCountRange] = useState('0-1000');
+  const [minVideos, setMinVideos] = useState('');
+  const [maxVideos, setMaxVideos] = useState('');
 
   return (
     <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-gray-800 bg-opacity-50">
       <div className="bg-white rounded-lg p-8 w-full md:w-1/2">
         <h2 className="text-lg font-semibold mb-4">Filter Options</h2>
         <div className="flex flex-col space-y-4">
-          <label htmlFor="channelCount">
-            Number of Channels to Display: (Max 50 Results){" "}
-          </label>
-          <input
-            type="text"
-            id="channelCount"
-            value={channelCount}
-            onChange={(e) => {
-              let value = e.target.value;
-              // Sadece rakamları kabul et
-              value = value.replace(/\D/g, "");
-              // En fazla 2 haneli olacak şekilde sınırlandır
-              value = value.slice(0, 2);
-              // Sıfır yazılamayacak
-              if (value.startsWith("0")) {
-                value = value.substring(1);
-              }
-              // - sembolünü engelle
-              if (value.includes("-")) {
-                value = value.replace("-", "");
-              }
-              // 50'den fazla kanal girişi yapılamayacak
-              if (parseInt(value) > 50) {
-                value = "50";
-              }
-              // Set the final value
-              setChannelCount(value);
-            }}
+          <label htmlFor="searchType">Search Type:</label>
+          <select
+            id="searchType"
+            value={searchType}
+            onChange={(e) => setSearchType(e.target.value)}
             className="border border-gray-300 rounded-lg focus:outline-none px-4 py-2"
-          />
-
+          >
+            <option value="channel">Only Channel Name</option>
+            <option value="shorts">Shorts Video</option>
+            <option value="long">Long Video</option>
+          </select>
           <label htmlFor="subscriberRange">Subscriber Range:</label>
           <select
             id="subscriberRange"
@@ -126,9 +90,8 @@ const FilterChannelSearch = ({
               />
             </div>
           )}
-          {/* 'Apply Filters' butonuna tıklanınca applyFilters fonksiyonunu çağır */}
           <button
-            onClick={handleApplyFiltersClick}
+            onClick={handleApplyFilters}
             className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg"
           >
             Apply Filters
@@ -145,4 +108,4 @@ const FilterChannelSearch = ({
   );
 };
 
-export default FilterChannelSearch;
+export default FilterVideoIdeasSearch;
