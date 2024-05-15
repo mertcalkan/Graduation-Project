@@ -90,6 +90,7 @@ const SuggestChannelsWithHashtags = () => {
           if (tags.length === 0) {
               setError("Please enter a tag.");
           } else {
+            
               if (maxVideos < minVideos) {
                   setMaxVideos(minVideos);
                   setMinVideos(maxVideos);
@@ -109,7 +110,7 @@ const SuggestChannelsWithHashtags = () => {
               
               const popularVideos = await Promise.all(tags.map(async (tag) => {
                   const response = await fetch(
-                    `https://www.googleapis.com/youtube/v3/search?key=${API_KEY}&part=snippet&type=channel&q=${encodeURIComponent(hashtagReq)}`
+                    `https://www.googleapis.com/youtube/v3/search?key=${API_KEY}&part=snippet&maxResults=${channelCount}&type=channel&q=${encodeURIComponent(hashtagReq)}`
                   );
                   const data = await response.json();
                   return data.items;
