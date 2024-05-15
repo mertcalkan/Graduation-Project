@@ -83,53 +83,73 @@ const SuggestChannelsWithHashtags = () => {
   const [showCustomVideoCountRange, setShowCustomVideoCountRange] =
     useState(false);
 
-  const handleSearch = async () => {
-   
-    setLoading(true);
-    const API_KEY = "YOUR_API_KEY"; // Replace with your API key
-    try {
-      if (tags.length === 0) {
-        setError("Please enter a tag.");
-      } else {
-        if(maxVideos < minVideos){
-          setMaxVideos(minVideos)
-          setMinVideos(maxVideos)
-          let tempMinVideos = minVideos
-          minVideos = maxVideos
-          maxVideos = tempMinVideos; 
-          console.log(minVideos,  maxVideos)
-        }
-        if(maxSubscribers < minSubscribers){
-          setMaxSubscribers(minSubscribers)
-          setMinSubscribers(maxSubscribers)
-          let tempMinSubscribers = minSubscribers
-          minSubscribers = maxSubscribers;
-          maxSubscribers = tempMinSubscribers
-        }
-        const hashtagReq = tags.join("+");
-        const response = await fetch(
-          `https://www.googleapis.com/youtube/v3/search?key=${API_KEY}&part=snippet&type=channel&q=${encodeURIComponent(
-            hashtagReq
-          )}`
-        );
-        const data = await response.json();
-        setSearchResults(
-          data.items.map((item) => ({
-            id: item.id.channelId,
-            title: item.snippet.title,
-            description: item.snippet.description,
-            thumbnail: item.snippet.thumbnails.default.url,
-          }))
-        );
-        setError(null); // Clear error when search succeeds
+    const handleSearch = async () => {
+      setLoading(true);
+      const API_KEY = "AIzaSyBMepq0T0uNF6NVuWMI1skYVTs8HTTGEd0"; // YouTube API key
+      try {
+          if (tags.length === 0) {
+              setError("Please enter a tag.");
+          } else {
+              if (maxVideos < minVideos) {
+                  setMaxVideos(minVideos);
+                  setMinVideos(maxVideos);
+                  let tempMinVideos = minVideos;
+                  minVideos = maxVideos;
+                  maxVideos = tempMinVideos;
+                  console.log(minVideos, maxVideos);
+              }
+              if (maxSubscribers < minSubscribers) {
+                  setMaxSubscribers(minSubscribers);
+                  setMinSubscribers(maxSubscribers);
+                  let tempMinSubscribers = minSubscribers;
+                  minSubscribers = maxSubscribers;
+                  maxSubscribers = tempMinSubscribers;
+              }
+              const hashtagReq = tags.join("+"); // Move the declaration here
+              
+              const popularVideos = await Promise.all(tags.map(async (tag) => {
+                  const response = await fetch(
+                    `https://www.googleapis.com/youtube/v3/search?key=${API_KEY}&part=snippet&type=channel&q=${encodeURIComponent(hashtagReq)}`
+                  );
+                  const data = await response.json();
+                  return data.items;
+              }));
+              console.log(popularVideos,hashtagReq)
+              // Extract channels from popular videos
+              const channels = popularVideos.flatMap(items => items.map(item => item.snippet.channelId));
+              console.log(channels)
+              // Remove duplicate channel ids
+              const uniqueChannels = [...new Set(channels)];
+             
+              // Fetch channel details
+              const channelDetails = await Promise.all(uniqueChannels.map(async (channelId) => {
+                  const response = await fetch(
+                      `https://www.googleapis.com/youtube/v3/channels?key=${API_KEY}&part=snippet&id=${channelId}`
+                  );
+                  const data = await response.json();
+                  return data.items[0];
+              }));
+              console.log(channelDetails)
+              // Prepare search results using channel details
+              setSearchResults(
+                  channelDetails.map(item => ({
+                      id: item.id,
+                      title: item.snippet.title,
+                      description: item.snippet.description,
+                      thumbnail: item.snippet.thumbnails.default.url,
+                  }))
+              );
+              setError(null); // Clear error when search succeeds
+          }
+      } catch (error) {
+          console.error("Error during search:", error);
+          setError("An error occurred during search.");
       }
-    } catch (error) {
-      console.error("Error during search:", error);
-      setError("An error occurred during search.");
-    }
-
-    setLoading(false);
+  
+      setLoading(false);
   };
+  
+  
 
   const generateIdeas = () => {
     console.log("Generating ideas for all results");
@@ -160,19 +180,15 @@ const SuggestChannelsWithHashtags = () => {
               value={channelCount}
               onChange={(e) => {
                 let value = e.target.value;
-                // Sadece rakamları kabul et
                 value = value.replace(/\D/g, "");
-                // En fazla 2 haneli olacak şekilde sınırlandır
                 value = value.slice(0, 2);
-                // Sıfır yazılamayacak
                 if (value.startsWith("0")) {
                   value = value.substring(1);
                 }
-                // - sembolünü engelle
                 if (value.includes("-")) {
                   value = value.replace("-", "");
                 }
-                // 50'den fazla kanal girişi yapılamayacak
+
                 if (parseInt(value) > 50) {
                   value = "50";
                 }
