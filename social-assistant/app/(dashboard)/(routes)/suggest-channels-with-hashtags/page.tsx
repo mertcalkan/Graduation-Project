@@ -82,7 +82,7 @@ const SuggestChannelsWithHashtags = () => {
  let [maxVideos, setMaxVideos] = useState("");
   const [showCustomSubscriberRange, setShowCustomSubscriberRange] = useState(false);
   const [showCustomVideoCountRange, setShowCustomVideoCountRange] = useState(false);
-
+  
   const handlePopupOpen = (data) => {
     setPopupData(data);
   };
@@ -92,6 +92,7 @@ const SuggestChannelsWithHashtags = () => {
   };
   const handleSearch = async () => {
     setLoading(true);
+    
     const API_KEY = "AIzaSyASFJquvesoqC9Yx06F0-Q1MswQfNJo8ZQ"; // API anahtarınızı buraya ekleyin
     try {
       if (tags.length === 0) {
@@ -402,7 +403,7 @@ const SuggestChannelsWithHashtags = () => {
   <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black bg-opacity-50">
     
     <div className="bg-white p-8 rounded-lg w-3/4 max-w-sm max-h-screen overflow-y-auto">
-    <h2 className="text-lg font-bold mb-8">Channel Information</h2>
+    <h2 className="text-lg font-semibold mb-8">Channel Information</h2>
     <img src={popupData.thumbnail} alt="Thumbnail" className="mt-2"  />
    
       <h2 className="text-lg font-semibold">{popupData.title}</h2>
