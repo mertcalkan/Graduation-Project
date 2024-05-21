@@ -143,14 +143,8 @@ const SuggestChannelsWithHashtags = () => {
           const data = await response.json();
           return data.items[0];
         }));
-    
-        // const filteredResults = channelDetails.filter(item => {
-        //   const subscribers = parseInt(item.statistics.subscriberCount);
-        //   const videos = parseInt(item.statistics.videoCount);
-        //   return subscribers >= minSubscribers && subscribers <= maxSubscribers &&
-        //          videos >= minVideos && videos <= maxVideos;
-        // });
-    
+        console.log(typeof(minVideos))
+        
         // Kanal detaylarından arama sonuçlarını hazırla
         setSearchResults(
           channelDetails.map(item => ({
@@ -162,7 +156,12 @@ const SuggestChannelsWithHashtags = () => {
             viewCount: item.statistics.viewCount,
             videoCount: item.statistics.videoCount,
             country: item.snippet.country,
-          }))
+          })).filter(item => {
+            const subscribers = parseInt(item.subscribers);
+            const videos = parseInt(item.videoCount);
+            return subscribers >= Number(minSubscribers) && subscribers <= Number(maxSubscribers) &&
+                   videos >= Number(minVideos) && videos <= Number(maxVideos);
+          })
         );
         setError(null); // Arama başarılıysa hatayı temizle
       }
@@ -401,13 +400,17 @@ const SuggestChannelsWithHashtags = () => {
 {/* Popup component for detailed channel information */}
 {popupData && (
   <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black bg-opacity-50">
+    
     <div className="bg-white p-8 rounded-lg w-3/4 max-w-sm max-h-screen overflow-y-auto">
+    <h2 className="text-lg font-bold mb-8">Channel Information</h2>
     <img src={popupData.thumbnail} alt="Thumbnail" className="mt-2"  />
+   
       <h2 className="text-lg font-semibold">{popupData.title}</h2>
       <p className="text-gray-600 mb-4">{popupData.description}</p>
       <p className="text-gray-600">
         Subscribers: {new Intl.NumberFormat('en-US', { notation: 'compact', compactDisplay: 'short' }).format(popupData.subscribers)}<br />
         Views: {new Intl.NumberFormat('en-US', { notation: 'compact', compactDisplay: 'short' }).format(popupData.viewCount)}<br />
+        Video Count: {new Intl.NumberFormat('en-US', { notation: 'compact', compactDisplay: 'short' }).format(popupData.videoCount)}<br />
         Country: {popupData.country}
       </p>
       <button
