@@ -6,8 +6,9 @@ import { Progress } from "@/components/ui/progress";
 
 const TagsInput = ({ tags, setTags, handleSearch }) => {
   const [inputValue, setInputValue] = useState("");
+  
 
-  const handleInputChange = (event) => {
+  const handleInputChange = (event) => {  
     setInputValue(event.target.value);
   };
 
@@ -72,85 +73,101 @@ const SuggestChannelsWithHashtags = () => {
   const [tags, setTags] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  let [searchResults, setSearchResults] = useState([]);
-  let [channelCount, setChannelCount] = useState("");
+  const [popupData, setPopupData] = useState(null);
+  const [searchResults, setSearchResults] = useState([]);
+  const [channelCount, setChannelCount] = useState("");
   let [minSubscribers, setMinSubscribers] = useState("");
-  let[maxSubscribers, setMaxSubscribers] = useState("");
+  let [maxSubscribers, setMaxSubscribers] = useState("");
   let [minVideos, setMinVideos] = useState("");
-  let [maxVideos, setMaxVideos] = useState("");
-  const [showCustomSubscriberRange, setShowCustomSubscriberRange] =
-    useState(false);
-  const [showCustomVideoCountRange, setShowCustomVideoCountRange] =
-    useState(false);
+ let [maxVideos, setMaxVideos] = useState("");
+  const [showCustomSubscriberRange, setShowCustomSubscriberRange] = useState(false);
+  const [showCustomVideoCountRange, setShowCustomVideoCountRange] = useState(false);
 
-    const handleSearch = async () => {
-      setLoading(true);
-      const API_KEY = "AIzaSyBMepq0T0uNF6NVuWMI1skYVTs8HTTGEd0"; // YouTube API key
-      try {
-          if (tags.length === 0) {
-              setError("Please enter a tag.");
-          } else {
-            
-              if (maxVideos < minVideos) {
-                  setMaxVideos(minVideos);
-                  setMinVideos(maxVideos);
-                  let tempMinVideos = minVideos;
-                  minVideos = maxVideos;
-                  maxVideos = tempMinVideos;
-                  console.log(minVideos, maxVideos);
-              }
-              if (maxSubscribers < minSubscribers) {
-                  setMaxSubscribers(minSubscribers);
-                  setMinSubscribers(maxSubscribers);
-                  let tempMinSubscribers = minSubscribers;
-                  minSubscribers = maxSubscribers;
-                  maxSubscribers = tempMinSubscribers;
-              }
-              const hashtagReq = tags.join("+"); // Move the declaration here
-              
-              const popularVideos = await Promise.all(tags.map(async (tag) => {
-                  const response = await fetch(
-                    `https://www.googleapis.com/youtube/v3/search?key=${API_KEY}&part=snippet&maxResults=${channelCount}&type=channel&q=${encodeURIComponent(hashtagReq)}`
-                  );
-                  const data = await response.json();
-                  return data.items;
-              }));
-              console.log(popularVideos,hashtagReq)
-              // Extract channels from popular videos
-              const channels = popularVideos.flatMap(items => items.map(item => item.snippet.channelId));
-              console.log(channels)
-              // Remove duplicate channel ids
-              const uniqueChannels = [...new Set(channels)];
-             
-              // Fetch channel details
-              const channelDetails = await Promise.all(uniqueChannels.map(async (channelId) => {
-                  const response = await fetch(
-                      `https://www.googleapis.com/youtube/v3/channels?key=${API_KEY}&part=snippet&id=${channelId}`
-                  );
-                  const data = await response.json();
-                  return data.items[0];
-              }));
-              console.log(channelDetails)
-              // Prepare search results using channel details
-              setSearchResults(
-                  channelDetails.map(item => ({
-                      id: item.id,
-                      title: item.snippet.title,
-                      description: item.snippet.description,
-                      thumbnail: item.snippet.thumbnails.default.url,
-                  }))
-              );
-              setError(null); // Clear error when search succeeds
-          }
-      } catch (error) {
-          console.error("Error during search:", error);
-          setError("An error occurred during search.");
-      }
-  
-      setLoading(false);
+  const handlePopupOpen = (data) => {
+    setPopupData(data);
   };
-  
-  
+
+  const handlePopupClose = () => {
+    setPopupData(null);
+  };
+  const handleSearch = async () => {
+    setLoading(true);
+    const API_KEY = "AIzaSyBMepq0T0uNF6NVuWMI1skYVTs8HTTGEd0"; // API anahtarınızı buraya ekleyin
+    try {
+      if (tags.length === 0) {
+        setError("Please enter a tag.");
+      } else {
+        if (maxVideos < minVideos) {
+          setMaxVideos(minVideos);
+          setMinVideos(maxVideos);
+          let tempMinVideos = minVideos;
+          minVideos = maxVideos;
+          maxVideos = tempMinVideos;
+        }
+        if (maxSubscribers < minSubscribers) {
+          setMaxSubscribers(minSubscribers);
+          setMinSubscribers(maxSubscribers);
+          let tempMinSubscribers = minSubscribers;
+          minSubscribers = maxSubscribers;
+          maxSubscribers = tempMinSubscribers;
+        }
+        const hashtagReq = tags.join("+"); // Etiketlerden hashtag isteği oluştur
+    
+        // Etiketlere göre popüler videoları bul
+        const popularVideos = await Promise.all(tags.map(async (tag) => {
+          let response;
+          if (channelCount !== "") {
+            response = await fetch(
+              `https://www.googleapis.com/youtube/v3/search?key=${API_KEY}&part=snippet&maxResults=${channelCount}&type=video&q=${encodeURIComponent(tag)}`
+            );
+          } else {
+            response = await fetch(
+              `https://www.googleapis.com/youtube/v3/search?key=${API_KEY}&part=snippet&type=video&q=${encodeURIComponent(tag)}`
+            );
+          }
+          const data = await response.json();
+          return data.items;
+        }));
+    
+        // Popüler videolardan kanal ID'lerini çıkar
+        const channels = popularVideos.flatMap(items => items.map(item => item.snippet.channelId));
+    
+        // Tekil kanal ID'lerini al
+        const uniqueChannels = [...new Set(channels)];
+    
+        // Kanal detaylarını al
+        const channelDetails = await Promise.all(uniqueChannels.map(async (channelId) => {
+          const response = await fetch(
+            `https://www.googleapis.com/youtube/v3/channels?key=${API_KEY}&part=snippet,statistics&id=${channelId}`
+          );
+          const data = await response.json();
+          return data.items[0];
+        }));
+    
+        // Kanal detaylarından arama sonuçlarını hazırla
+        setSearchResults(
+          channelDetails.map(item => ({
+            id: item.id,
+            title: item.snippet.title,
+            description: item.snippet.description,
+            thumbnail: item.snippet.thumbnails?.default?.url,
+            subscribers: item.statistics.subscriberCount,
+            viewCount: item.statistics.viewCount,
+            videoCount: item.statistics.videoCount,
+            country: item.snippet.country,
+          }))
+        );
+        setError(null); // Arama başarılıysa hatayı temizle
+      }
+    } catch (error) {
+      console.error("Error during search:", error);
+      setError("An error occurred during search.");
+    }
+    
+    setLoading(false);
+    
+    
+  };
 
   const generateIdeas = () => {
     console.log("Generating ideas for all results");
@@ -189,7 +206,6 @@ const SuggestChannelsWithHashtags = () => {
                 if (value.includes("-")) {
                   value = value.replace("-", "");
                 }
-
                 if (parseInt(value) > 50) {
                   value = "50";
                 }
@@ -212,13 +228,16 @@ const SuggestChannelsWithHashtags = () => {
                   : minSubscribers + "-" + maxSubscribers
               }
               onChange={(e) => {
-                // const [min, max] = e.target.value.split("-");
-                if (e.target.value === "custom") {
+                const value = e.target.value;
+                if (value === "custom") {
+                  setMinSubscribers("");
+                  setMaxSubscribers("");
                   setShowCustomSubscriberRange(true);
                 } else {
                   setShowCustomSubscriberRange(false);
-                  // setMinSubscribers(min);
-                  // setMaxSubscribers(max);
+                  const [min, max] = value.split("-");
+                  setMinSubscribers(min);
+                  setMaxSubscribers(max);
                 }
               }}
               className="border border-gray-300 rounded-lg focus:outline-none px-4 py-2 w-full"
@@ -238,7 +257,6 @@ const SuggestChannelsWithHashtags = () => {
                   value={minSubscribers}
                   onChange={(e) => {
                     const value = e.target.value;
-                    // Allow only numeric characters and handle backspace
                     if (/^\d*$/.test(value) || value === "") {
                       setMinSubscribers(value);
                     }
@@ -252,7 +270,6 @@ const SuggestChannelsWithHashtags = () => {
                   value={maxSubscribers}
                   onChange={(e) => {
                     const value = e.target.value;
-                    // Allow only numeric characters and handle backspace
                     if (/^\d*$/.test(value) || value === "") {
                       setMaxSubscribers(value);
                     }
@@ -276,13 +293,16 @@ const SuggestChannelsWithHashtags = () => {
                   : minVideos + "-" + maxVideos
               }
               onChange={(e) => {
-                // const [min, max] = e.target.value.split("-");
-                if (e.target.value === "custom") {
+                const value = e.target.value;
+                if (value === "custom") {
+                  setMinVideos("");
+                  setMaxVideos("");
                   setShowCustomVideoCountRange(true);
                 } else {
                   setShowCustomVideoCountRange(false);
-                  // setMinVideos(min);
-                  // setMaxVideos(max);
+                  const [min, max] = value.split("-");
+                  setMinVideos(min);
+                  setMaxVideos(max);
                 }
               }}
               className="border border-gray-300 rounded-lg focus:outline-none px-4 py-2 w-full"
@@ -302,7 +322,6 @@ const SuggestChannelsWithHashtags = () => {
                   value={minVideos}
                   onChange={(e) => {
                     const value = e.target.value;
-                    // Allow only numeric characters and handle backspace
                     if (/^\d*$/.test(value) || value === "") {
                       setMinVideos(value);
                     }
@@ -316,7 +335,6 @@ const SuggestChannelsWithHashtags = () => {
                   value={maxVideos}
                   onChange={(e) => {
                     const value = e.target.value;
-                    // Allow only numeric characters and handle backspace
                     if (/^\d*$/.test(value) || value === "") {
                       setMaxVideos(value);
                     }
@@ -326,6 +344,7 @@ const SuggestChannelsWithHashtags = () => {
                 />
               </div>
             )}
+            
           </div>
         </div>
         <h1 className="mt-8 text-xl font-semibold mr-4">
@@ -341,24 +360,60 @@ const SuggestChannelsWithHashtags = () => {
       )}
       {error && <div className="mt-2 text-red-500 text-center">{error}</div>}
       <div className="grid grid-cols-3 gap-4 mt-4">
-        {searchResults.map((result, index) => (
-          <div key={index} className="border p-4 ml-8 mr-8 ">
-            <img src={result.thumbnail} alt="Thumbnail" className="mt-2" />
-            <h3 className="text-lg font-semibold">{result.title}</h3>
-            <p className="text-gray-600">{result.description}</p>
-          </div>
-        ))}
-      </div>
-      {searchResults.length > 0 && (
-        <div className="mt-4 text-center">
-          <button
-            onClick={generateIdeas}
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg"
+  {searchResults.map((result, index) => (
+    <div key={index} className="border p-4 ml-8 mr-8 " onClick={() => handlePopupOpen(result)} >
+      <img src={result.thumbnail} alt="Thumbnail" className="mt-2"  />
+      <h3 className="text-lg font-semibold">{result.title}</h3>
+      <p className="text-gray-600" >
+        {result.description.length > 150
+          ? `${result.description.slice(0, 150)}...`
+          : result.description}
+        {result.description.length > 150 && (
+          <span
+            className="text-blue-500 cursor-pointer"
+            onClick={() => handlePopupOpen(result)}
           >
-            Generate Ideas
-          </button>
-        </div>
-      )}
+            {" Daha Fazlasını Gör"}
+          </span>
+        )}
+      </p>
+    </div>
+  ))}
+</div>
+{searchResults.length > 0 && (
+  <div className="mt-4 text-center">
+    <button
+      onClick={generateIdeas}
+      className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg"
+    >
+      Generate Channel Ideas
+    </button>
+  </div>
+)}
+
+{/* Popup component for detailed channel information */}
+{popupData && (
+  <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black bg-opacity-50">
+    <div className="bg-white p-8 rounded-lg w-3/4 max-w-sm max-h-screen overflow-y-auto">
+    <img src={popupData.thumbnail} alt="Thumbnail" className="mt-2"  />
+      <h2 className="text-lg font-semibold">{popupData.title}</h2>
+      <p className="text-gray-600 mb-4">{popupData.description}</p>
+      <p className="text-gray-600">
+      Subscribers: {new Intl.NumberFormat('en-US', { notation: 'compact', compactDisplay: 'short' }).format(popupData.subscribers)}<br />
+        Views: {new Intl.NumberFormat('en-US', { notation: 'compact', compactDisplay: 'short' }).format(popupData.viewCount)}<br />
+        Country: {popupData.country}
+      </p>
+      <button
+        className="mt-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg"
+        onClick={handlePopupClose}
+      >
+        Close
+      </button>
+    </div>
+  </div>
+)}
+
+
     </div>
   );
 };
