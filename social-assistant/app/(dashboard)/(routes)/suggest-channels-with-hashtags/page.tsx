@@ -399,7 +399,7 @@ const SuggestChannelsWithHashtags = () => {
       <h2 className="text-lg font-semibold">{popupData.title}</h2>
       <p className="text-gray-600 mb-4">{popupData.description}</p>
       <p className="text-gray-600">
-      Subscribers: {new Intl.NumberFormat('en-US', { notation: 'compact', compactDisplay: 'short' }).format(popupData.subscribers)}<br />
+        Subscribers: {new Intl.NumberFormat('en-US', { notation: 'compact', compactDisplay: 'short' }).format(popupData.subscribers)}<br />
         Views: {new Intl.NumberFormat('en-US', { notation: 'compact', compactDisplay: 'short' }).format(popupData.viewCount)}<br />
         Country: {popupData.country}
       </p>
