@@ -92,7 +92,7 @@ const SuggestChannelsWithHashtags = () => {
   };
   const handleSearch = async () => {
     setLoading(true);
-    const API_KEY = "AIzaSyBMepq0T0uNF6NVuWMI1skYVTs8HTTGEd0"; // API anahtarınızı buraya ekleyin
+    const API_KEY = "AIzaSyASFJquvesoqC9Yx06F0-Q1MswQfNJo8ZQ"; // API anahtarınızı buraya ekleyin
     try {
       if (tags.length === 0) {
         setError("Please enter a tag.");
@@ -143,6 +143,13 @@ const SuggestChannelsWithHashtags = () => {
           const data = await response.json();
           return data.items[0];
         }));
+    
+        // const filteredResults = channelDetails.filter(item => {
+        //   const subscribers = parseInt(item.statistics.subscriberCount);
+        //   const videos = parseInt(item.statistics.videoCount);
+        //   return subscribers >= minSubscribers && subscribers <= maxSubscribers &&
+        //          videos >= minVideos && videos <= maxVideos;
+        // });
     
         // Kanal detaylarından arama sonuçlarını hazırla
         setSearchResults(
@@ -359,7 +366,7 @@ const SuggestChannelsWithHashtags = () => {
         </div>
       )}
       {error && <div className="mt-2 text-red-500 text-center">{error}</div>}
-      <div className="grid grid-cols-3 gap-4 mt-4">
+      <div className="grid grid-cols-2 gap-4 mt-4 md:grid-cols-2 lg:grid-cols-3">
   {searchResults.map((result, index) => (
     <div key={index} className="border p-4 ml-8 mr-8 " onClick={() => handlePopupOpen(result)} >
       <img src={result.thumbnail} alt="Thumbnail" className="mt-2"  />
