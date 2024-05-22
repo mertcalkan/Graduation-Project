@@ -6,7 +6,8 @@ import { Progress } from "@/components/ui/progress";
 
 const isValidChannelUrl = (url) => {
   // YouTube channel URL regex pattern
-  const regex = /^(https?:\/\/)?(www\.)?youtube\.com\/(c\/|user\/)?@?([a-zA-Z0-9_-]+)$/;
+  const regex =
+    /^(https?:\/\/)?(www\.)?youtube\.com\/(c\/|user\/)?@?([a-zA-Z0-9_-]+)$/;
   return regex.test(url);
 };
 
@@ -24,7 +25,7 @@ const ChannelUrlInput = ({ inputValue, setInputValue, handleSearch }) => {
   };
 
   const handleSearchClick = () => {
-    console.log(inputValue)
+    console.log(inputValue);
     handleSearch(inputValue);
   };
 
@@ -61,8 +62,10 @@ const SuggestChannelsWithChannelUrl = () => {
   const [maxSubscribers, setMaxSubscribers] = useState("");
   const [minVideos, setMinVideos] = useState("");
   const [maxVideos, setMaxVideos] = useState("");
-  const [showCustomSubscriberRange, setShowCustomSubscriberRange] = useState(false);
-  const [showCustomVideoCountRange, setShowCustomVideoCountRange] = useState(false);
+  const [showCustomSubscriberRange, setShowCustomSubscriberRange] =
+    useState(false);
+  const [showCustomVideoCountRange, setShowCustomVideoCountRange] =
+    useState(false);
 
   const handlePopupOpen = (data) => {
     setPopupData(data);
@@ -74,35 +77,84 @@ const SuggestChannelsWithChannelUrl = () => {
 
   const handleSearch = async (channelUrl) => {
     setLoading(true);
-    const API_KEY = "AIzaSyASFJquvesoqC9Yx06F0-Q1MswQfNJo8ZQ";
-    try {
-      const response = await fetch(
-        `https://www.googleapis.com/youtube/v3/channels?key=${API_KEY}&part=snippet,statistics&id=${channelUrl}`
-      );
-      const data = await response.json();
-      console.log(data)
-      setSearchResults([{
-        id: data.items[0].id,
-        title: data.items[0].snippet.title,
-        description: data.items[0].snippet.description,
-        thumbnail: data.items[0].snippet.thumbnails.default.url,
-        subscribers: data.items[0].statistics.subscriberCount,
-        viewCount: data.items[0].statistics.viewCount,
-        videoCount: data.items[0].statistics.videoCount,
-        country: data.items[0].snippet.country,
-      }]);
-      setError(null);
-    } catch (error) {
-      console.error("Error during search:", error);
-      setError("An error occurred during search.");
-    }
-    setLoading(false);
+    const API_KEY = "AIzaSyASFJquvesoqC9Yx06F0-Q1MswQfNJo8ZQ"; // API anahtarınızı burada tanımlayın
+
+    const getChannelIdFromUrl = async (url) => {
+      try {
+        const channelName = url.split("@").pop();
+        console.log(channelName)
+        const response = await fetch(
+          `https://www.googleapis.com/youtube/v3/channels?key=${API_KEY}&forUsername=${channelName}&part=id`
+        );
+        const channelIdResult = await response.json()
+        
+       
+        return channelIdResult.items[0].id
+      } catch (error) {
+        throw new Error("Failed to fetch channel ID");
+      }
+      throw new Error("Channel not found");
+    };
+
+    const getPopularVideos = async (channelId) => {
+      try {
+        const response = await fetch(
+          `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&order=viewCount&maxResults=5&key=${API_KEY}`
+        );
+        const data = await response.json();
+        return data.items[0].id.videoId
+      } catch (error) {
+        throw new Error("Failed to fetch popular videos");
+      }
+    };
+
+    const getSimilarVideosChannels = async (videoId) => {
+      try {
+        const response = await fetch(
+          `https://www.googleapis.com/youtube/v3/search?part=snippet&relatedToVideoId=${videoId}&type=video&maxResults=5&key=${API_KEY}`
+        );
+        const data = await response.json();
+        if (data.items) {
+          return data.items.map((item) => ({
+            id: item.snippet.channelId,
+            title: item.snippet.title,
+            description: item.snippet.description,
+            thumbnail: item.snippet.thumbnails.default.url,
+          }));
+        }
+        return [];
+      } catch (error) {
+        throw new Error("Failed to fetch similar videos");
+      }
+    };
+
+    const fetchChannelAndSimilarVideos = async (url) => {
+      try {
+        let channelId = await getChannelIdFromUrl(url);
+        console.log(channelId)
+        let popularVideos = await getPopularVideos(channelId);
+        console.log(popularVideos)
+        let similarVideosChannels = [];
+        for (const videoId of popularVideos) {
+          const similarVideos = await getSimilarVideosChannels(videoId);
+          similarVideosChannels = similarVideosChannels.concat(similarVideos);
+        }
+
+        setSearchResults(similarVideosChannels);
+        setError(null);
+      } catch (error) {
+        console.error("Error during search:", error);
+        setError("An error occurred during search: " + error.message);
+      }
+      setLoading(false);
+    };
+
+    fetchChannelAndSimilarVideos(channelUrl);
   };
 
   const generateIdeas = () => {
     console.log("Generating ideas for all results");
   };
-
   return (
     <div>
       <Heading
@@ -339,7 +391,7 @@ const SuggestChannelsWithChannelUrl = () => {
                   notation: "compact",
                   compactDisplay: "short",
                 }).format(popupData.subscribers)}
-                <br/>
+                <br />
                 Views:{" "}
                 {new Intl.NumberFormat("en-US", {
                   notation: "compact",
