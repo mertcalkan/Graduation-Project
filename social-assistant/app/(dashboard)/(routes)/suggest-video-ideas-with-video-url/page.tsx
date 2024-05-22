@@ -104,10 +104,8 @@ const SuggestVideosWithVideoUrl = () => {
         let maxResults = 10;
 
         if (!videoCount && (!minVideoLikes || !maxVideoLikes) && (!minVideoViews || !maxVideoViews)) {
-          // Eğer video sayısı dolu değil ve diğer filtreler boşsa, maxResults 50 olacak
           maxResults = 50;
         } else if (videoCount) {
-          // Eğer video sayısı doluysa ve diğer filtreler boşsa, maxResults videoCount değerine eşit olacak
           maxResults = parseInt(videoCount);
         }
         const response = await fetch(
@@ -189,12 +187,11 @@ const SuggestVideosWithVideoUrl = () => {
   return (
     <div>
       <Heading
-        title="Suggest Channels With Channel URL"
-        description="You can have a look at YouTube channels based on your channel URL criteria."
+        title="Suggest Videos With Video URL"
+        description="You can have a look at YouTube videos and generate ideas based on your video URL criteria."
         icon={MessageCircleQuestion}
-        iconColor="text-violet-500"
-        bgColor="bg-violet-500
-        /10"
+        iconColor="text-yellow-500"
+        bgColor="bg-yellow-500/10"
       />
       <div className="app px-8">
         <h1 className="mt-4 text-l font-semibold mr-4">Filter Options</h1>
