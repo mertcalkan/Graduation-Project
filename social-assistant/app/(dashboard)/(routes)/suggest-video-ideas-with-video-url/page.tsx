@@ -61,9 +61,9 @@ const SuggestVideosWithVideoUrl = () => {
   const [maxVideoLikes, setMaxVideoLikes] = useState("");
   const [minVideoViews, setMinVideoViews] = useState("");
   const [maxVideoViews, setMaxVideoViews] = useState("");
-  const [showCustomSubscriberRange, setShowCustomSubscriberRange] =
-    useState(false);
   const [showCustomVideoLikesRange, setShowCustomVideoLikesRange] =
+    useState(false);
+  const [showCustomVideoViewRange, setShowCustomVideoViewRange] =
     useState(false);
 
   const handlePopupOpen = (data) => {
@@ -229,7 +229,7 @@ const SuggestVideosWithVideoUrl = () => {
             <select
               id="videoLikesRange"
               value={
-                showCustomSubscriberRange
+                showCustomVideoLikesRange
                   ? "custom"
                   : minVideoLikes + "-" + maxVideoLikes
               }
@@ -238,9 +238,9 @@ const SuggestVideosWithVideoUrl = () => {
                 if (value === "custom") {
                   setMinVideoLikes("");
                   setMaxVideoLikes("");
-                  setShowCustomSubscriberRange(true);
+                  setShowCustomVideoLikesRange(true);
                 } else {
-                  setShowCustomSubscriberRange(false);
+                  setShowCustomVideoLikesRange(false);
                   const [min, max] = value.split("-");
                   setMinVideoLikes(min);
                   setMaxVideoLikes(max);
@@ -255,7 +255,7 @@ const SuggestVideosWithVideoUrl = () => {
               <option value="1000000-10000000">1,000,000 - 10,000,000</option>
               <option value="custom">Custom Range</option>
             </select>
-            {showCustomSubscriberRange && (
+            {showCustomVideoLikesRange && (
               <div className="flex space-x-4 mt-2">
                 <input
                   type="text"
@@ -294,7 +294,7 @@ const SuggestVideosWithVideoUrl = () => {
             <select
               id="videoCountRange"
               value={
-                showCustomVideoLikesRange
+                showCustomVideoViewRange
                   ? "custom"
                   : minVideoViews + "-" + maxVideoViews
               }
@@ -303,9 +303,9 @@ const SuggestVideosWithVideoUrl = () => {
                 if (value === "custom") {
                   setMinVideoViews("");
                   setMaxVideoViews("");
-                  setShowCustomVideoLikesRange(true);
+                  setShowCustomVideoViewRange(true);
                 } else {
-                  setShowCustomVideoLikesRange(false);
+                  setShowCustomVideoViewRange(false);
                   const [min, max] = value.split("-");
                   setMinVideoViews(min);
                   setMaxVideoViews(max);
