@@ -189,7 +189,7 @@ const SuggestVideosWithHashtag = () => {
         description="You can have a look at YouTube videos and generate ideas based on your hashtag(s) criteria."
         icon={MessageCircleQuestion}
         iconColor="text-pink-500"
-        bgColor="bg-pink500/10"
+        bgColor="bg-pink-500/10"
       />
       <div className="app px-8">
         <h1 className="mt-4 text-l font-semibold mr-4">Filter Options</h1>
