@@ -77,53 +77,29 @@ const SuggestVideosWithChannelUrl = () => {
     setPopupData(null);
   };
 
-  const handleSearch = async (videoUrl) => {
+  const handleSearch = async (channelUrl) => {
     setLoading(true);
     try {
-      const videoId = new URL(videoUrl).searchParams.get("v");
-      if (!videoId) throw new Error("Invalid video URL");
+      const channelId = new URL(channelUrl).pathname.split("/").pop(); // Kanal URL'sinden kanal kimliğini alın
+      if (!channelId) throw new Error("Invalid channel URL");
   
-      const API_KEY = "YOUR_API_KEY"; // API anahtarınızı buraya ekleyin
+      const API_KEY = "AIzaSyBMepq0T0uNF6NVuWMI1skYVTs8HTTGEd0"; // API anahtarınızı buraya ekleyin
   
-      const fetchVideoDetails = async (videoId) => {
+      const fetchChannelVideos = async (channelId) => {
         const response = await fetch(
-          `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&id=${videoId}&key=${API_KEY}`
+          `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&maxResults=10&type=video&key=${API_KEY}`
         );
         return response.json();
       };
   
-      const videoDetailsData = await fetchVideoDetails(videoId);
+      const channelVideosData = await fetchChannelVideos(channelId);
   
-      if (!videoDetailsData.items || videoDetailsData.items.length === 0) {
-        throw new Error("Video details not found");
+      if (!channelVideosData.items || channelVideosData.items.length === 0) {
+        throw new Error("No videos found for the channel");
       }
   
-      const videoDetails = videoDetailsData.items[0];
-      const categoryId = videoDetails.snippet.categoryId;
-      const keywords = videoDetails.snippet.title.split(" ").join("+");
-  
-      const fetchRelatedVideos = async (keywords, categoryId) => {
-        let maxResults = 10;
-  
-        if (!videoCount && (!minVideoLikes || !maxVideoLikes) && (!minVideoViews || !maxVideoViews)) {
-          maxResults = 50;
-        } else if (videoCount) {
-          maxResults = parseInt(videoCount);
-        }
-        const response = await fetch(
-          `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=${maxResults}&key=${API_KEY}&q=${keywords}&videoCategoryId=${categoryId}`
-        );
-        return response.json();
-      };
-  
-      const relatedVideosData = await fetchRelatedVideos(keywords, categoryId);
-  
-      if (!relatedVideosData.items || relatedVideosData.items.length === 0) {
-        throw new Error("No related videos found");
-      }
-  
-      const relatedVideos = await Promise.all(
-        relatedVideosData.items.map(async (item) => {
+      const channelVideos = await Promise.all(
+        channelVideosData.items.map(async (item) => {
           const id = item.id.videoId || item.id;
           const videoData = await fetchVideoDetails(id);
           const video = videoData.items[0];
@@ -141,7 +117,7 @@ const SuggestVideosWithChannelUrl = () => {
       );
   
       // Filter based on likes and views
-      const filteredVideos = relatedVideos.filter((video) => {
+      const filteredVideos = channelVideos.filter((video) => {
         let likeCount = parseInt(video.likeCount.replace(/\D/g, "")) || 0;
         let viewCount = parseInt(video.viewCount.replace(/\D/g, "")) || 0;
   
@@ -168,7 +144,7 @@ const SuggestVideosWithChannelUrl = () => {
           likeCount <= maxLikes &&
           viewCount >= minViews &&
           viewCount <= maxViews &&
-          (!videoCount || relatedVideos.length <= parseInt(videoCount))
+          (!videoCount || channelVideos.length <= parseInt(videoCount))
         );
       });
   
@@ -181,6 +157,7 @@ const SuggestVideosWithChannelUrl = () => {
       setLoading(false);
     }
   };
+  
   
 
   const generateIdeas = () => {
