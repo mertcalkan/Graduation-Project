@@ -10,19 +10,21 @@ const isValidChannelUrl = (url) => {
   return regex.test(url);
 };
 
-const ChannelUrlInput = ({ handleSearch }) => {
-  const [inputValue, setInputValue] = useState(""); // Define inputValue state variable
+const ChannelUrlInput = ({ inputValue, setInputValue, handleSearch }) => {
+  const [error, setError] = useState("");
 
-  const handleInputChange = (event) => {  
-    setInputValue(event.target.value);
+  const handleInputChange = (event) => {
+    const value = event.target.value;
+    setInputValue(value);
+    if (!isValidChannelUrl(value) && value !== "") {
+      setError("Please enter a valid YouTube channel URL.");
+    } else {
+      setError("");
+    }
   };
 
   const handleSearchClick = () => {
-    // Pass inputValue to handleSearch function
-    if (!isValidChannelUrl(inputValue)) {
-      setError("Please enter a valid YouTube channel URL.");
-      return; // Exit the function early if URL is invalid
-    }
+    console.log(inputValue)
     handleSearch(inputValue);
   };
 
@@ -43,13 +45,13 @@ const ChannelUrlInput = ({ handleSearch }) => {
           Search
         </button>
       </div>
+      {error && <div className="mt-2 text-red-500">{error}</div>}
     </div>
   );
 };
 
-
 const SuggestChannelsWithChannelUrl = () => {
-  const [inputValue, setInputValue] = useState(""); // Define inputValue state variable
+  const [inputValue, setInputValue] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [popupData, setPopupData] = useState(null);
@@ -70,37 +72,15 @@ const SuggestChannelsWithChannelUrl = () => {
     setPopupData(null);
   };
 
-
-  const handleSearch = async () => {
-  console.log(inputValue); // Test to see the input value
-  if (!isValidChannelUrl(inputValue)) {
-    setError("Please enter a valid YouTube channel URL.");
-    return; // Exit the function early if URL is invalid
-  }
-
-  // Set loading to true here, since we're starting the search
-  setLoading(true);
-
-  try {
-    // Pass the inputValue to handleSearchWithChannelUrl function
-    await handleSearchWithChannelUrl(inputValue);
-    setError(null); // Reset error state if search is successful
-  } catch (error) {
-    console.error("Error during search:", error);
-    setError("An error occurred during search.");
-  } finally {
-    setLoading(false); // Ensure loading state is always set to false
-  }
-};
-
-  const handleSearchWithChannelUrl = async (channelUrl) => {
+  const handleSearch = async (channelUrl) => {
     setLoading(true);
-    const API_KEY = "YOUR_API_KEY_HERE";
+    const API_KEY = "AIzaSyASFJquvesoqC9Yx06F0-Q1MswQfNJo8ZQ";
     try {
       const response = await fetch(
         `https://www.googleapis.com/youtube/v3/channels?key=${API_KEY}&part=snippet,statistics&id=${channelUrl}`
       );
       const data = await response.json();
+      console.log(data)
       setSearchResults([{
         id: data.items[0].id,
         title: data.items[0].snippet.title,
@@ -295,7 +275,11 @@ const SuggestChannelsWithChannelUrl = () => {
         <h1 className="mt-8 text-xl font-semibold mr-4">
           Search the channel based on your taste!
         </h1>
-        <ChannelUrlInput handleSearch={handleSearch} />
+        <ChannelUrlInput
+          inputValue={inputValue}
+          setInputValue={setInputValue}
+          handleSearch={handleSearch}
+        />
 
         {loading && (
           <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center">
@@ -385,4 +369,3 @@ const SuggestChannelsWithChannelUrl = () => {
 };
 
 export default SuggestChannelsWithChannelUrl;
-
