@@ -3,6 +3,8 @@ import React, { useState } from "react";
 import { Heading } from "@/components/heading";
 import { MessageCircleQuestion } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import axios from "axios";
+
 
 const isValidVideoUrl = (url) => {
   const regex =
@@ -16,7 +18,7 @@ const ChannelUrlInput = ({ inputValue, setInputValue, handleSearch }) => {
   const handleInputChange = (event) => {
     const value = event.target.value;
     setInputValue(value);
-    if (!isValidVideoUrl(value) && value !== "") {
+    if (!isValidVideoUrl(value) && value != "") {
       setError("Please enter a valid YouTube Video URL.");
     } else {
       setError("");
@@ -51,6 +53,7 @@ const ChannelUrlInput = ({ inputValue, setInputValue, handleSearch }) => {
 };
 
 const SuggestVideosWithVideoUrl = () => {
+
   const [inputValue, setInputValue] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -180,9 +183,37 @@ const SuggestVideosWithVideoUrl = () => {
     }
   };
 
-  const generateIdeas = () => {
-    console.log("Generating ideas for all results");
-  };
+  const generateIdeas = async () => {
+    try {
+        const response = await axios.post('/api/generate', { videoResults: searchResults });
+
+        if (!response.data) {
+            throw new Error('Empty response received from server');
+        }
+
+        console.log('Response data:', response.data);
+
+        if (!response.data.ideas) {
+            throw new Error('No ideas found in response');
+        }
+
+        console.log(response.data.ideas);
+    } catch (error) {
+        if (error.response) {
+            console.error('HTTP error:', error.response.status);
+            console.error('Error data:', error.response.data);
+        } else if (error.request) {
+            console.error('Request error:', error.request);
+        } else {
+            console.error('Error:', error.message);
+        }
+    }
+};
+
+  
+  
+  
+  
 
   return (
     <div>

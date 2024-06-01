@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { Heading } from "@/components/heading";
 import { Filter, MessageCircleQuestion } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import OpenAI from 'openai';
 
 const TagsInput = ({ tags, setTags, handleSearch }) => {
   const [inputValue, setInputValue] = useState("");
@@ -69,6 +70,7 @@ const TagsInput = ({ tags, setTags, handleSearch }) => {
 };
 
 const SuggestChannelsWithHashtags = () => {
+  const openai = new OpenAI({apiKey:"sk-proj-2v30iYHu0dcTUBB9XCWWT3BlbkFJtskDkosP9UyAH1wLfWeF", dangerouslyAllowBrowser:true});
   const [tags, setTags] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -201,9 +203,59 @@ const SuggestChannelsWithHashtags = () => {
     setLoading(false);
   };
 
-  const generateIdeas = () => {
-    console.log("Generating ideas for all results");
+  const generateIdeas = async () => {
+    if (!searchResults || searchResults.length === 0) {
+      setError("No search results to generate ideas from.");
+      return;
+    }
+  
+    setLoading(true);
+  
+    try {
+      const prompt = `Create new YouTube channel ideas based on the following channels:\n\n${searchResults
+        .map(
+          (channel) =>
+            `Title: ${channel.title}, Description: ${channel.description}, Subscribers: ${channel.subscribers}, Video Count: ${channel.videoCount}, Country: ${channel.country}`
+        )
+        .join("\n\n")}\n\nPlease provide unique and creative channel ideas with titles and descriptions.`;
+  
+      const response = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${openai.apiKey}`, // Replace with your actual API key
+        },
+        body: JSON.stringify({
+          model: "gpt-3.5-turbo",
+          messages: [{ role: "system", content: prompt }],
+          max_tokens: 500,
+          n: 1,
+          stop: null,
+          temperature: 0.7,
+        }),
+      });
+  
+      const responseData = await response.json();
+  
+      const newChannelIdeas = responseData.choices.map((choice, index) => ({
+        id: index + 1,
+        idea: choice.message.content.trim(),
+      }));
+  
+      const jsonIdeas = JSON.stringify(newChannelIdeas, null, 2);
+  
+      setLoading(false);
+      setError(null);
+    } catch (error) {
+      console.error("Error generating channel ideas:", error);
+      setError("An error occurred while generating channel ideas.");
+      setLoading(false);
+    }
   };
+  
+  
+  
+  
 
   return (
     <div>
