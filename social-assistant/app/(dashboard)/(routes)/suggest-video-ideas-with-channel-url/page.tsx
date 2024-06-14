@@ -20,7 +20,7 @@ const ChannelUrlInput = ({ inputValue, setInputValue, handleSearch }) => {
     const value = event.target.value;
     setInputValue(value);
     if (!isValidChannelUrl (value) && value !== "") {
-      setError("Please enter a valid YouTube Video URL.");
+      setError("Please enter a valid YouTube channel URL.");
     } else {
       setError("");
     }
@@ -79,20 +79,58 @@ const SuggestVideosWithChannelUrl = () => {
 
   const handleSearch = async (channelUrl) => {
     setLoading(true);
+    const API_KEY = "AIzaSyASFJquvesoqC9Yx06F0-Q1MswQfNJo8ZQ";
     try {
-      const channelId = new URL(channelUrl).pathname.split("/").pop(); // Kanal URL'sinden kanal kimliğini alın
-      if (!channelId) throw new Error("Invalid channel URL");
+      const channelName = channelUrl.split("@").pop();
+      console.log("Channel Name:", channelName);
   
-      const API_KEY = "AIzaSyBMepq0T0uNF6NVuWMI1skYVTs8HTTGEd0"; // API anahtarınızı buraya ekleyin
+      const response = await fetch(
+        `https://www.googleapis.com/youtube/v3/channels?key=${API_KEY}&forUsername=${channelName}&part=id`
+      );
+  
+      const channelIdResult = await response.json();
+      console.log("Channel ID Result:", channelIdResult);
+  
+      if (!channelIdResult.items || channelIdResult.items.length === 0) {
+        throw new Error("Invalid channel URL");
+      }
+  
+      const channelId = channelIdResult.items[0].id;
+      console.log("Channel ID:", channelId);
   
       const fetchChannelVideos = async (channelId) => {
+        let maxResults = 10;
+
+        if (!videoCount && (!minVideoLikes || !maxVideoLikes) && (!minVideoViews || !maxVideoViews)) {
+          maxResults = 50;
+        } else if (videoCount) {
+          maxResults = parseInt(videoCount);
+        }
         const response = await fetch(
-          `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&maxResults=10&type=video&key=${API_KEY}`
+          `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&maxResults=${maxResults}&type=video&key=${API_KEY}`
         );
+  
+        if (!response.ok) {
+          throw new Error(`YouTube API Error: ${response.statusText}`);
+        }
+  
+        return response.json();
+      };
+  
+      const fetchVideoDetails = async (videoId) => {
+        const response = await fetch(
+          `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&id=${videoId}&key=${API_KEY}`
+        );
+  
+        if (!response.ok) {
+          throw new Error(`YouTube API Error: ${response.statusText}`);
+        }
+  
         return response.json();
       };
   
       const channelVideosData = await fetchChannelVideos(channelId);
+      console.log("Channel Videos Data:", channelVideosData);
   
       if (!channelVideosData.items || channelVideosData.items.length === 0) {
         throw new Error("No videos found for the channel");
@@ -103,6 +141,7 @@ const SuggestVideosWithChannelUrl = () => {
           const id = item.id.videoId || item.id;
           const videoData = await fetchVideoDetails(id);
           const video = videoData.items[0];
+  
           return {
             id,
             title: video.snippet.title,
@@ -116,6 +155,8 @@ const SuggestVideosWithChannelUrl = () => {
         })
       );
   
+      console.log("Channel Videos:", channelVideos);
+  
       // Filter based on likes and views
       const filteredVideos = channelVideos.filter((video) => {
         let likeCount = parseInt(video.likeCount.replace(/\D/g, "")) || 0;
@@ -125,6 +166,7 @@ const SuggestVideosWithChannelUrl = () => {
         let maxLikes = parseInt(maxVideoLikes) || Infinity;
         let minViews = parseInt(minVideoViews) || 0;
         let maxViews = parseInt(maxVideoViews) || Infinity;
+  
         if (maxViews < minViews) {
           setMaxVideoViews(minViews);
           setMinVideoViews(maxViews);
@@ -132,6 +174,7 @@ const SuggestVideosWithChannelUrl = () => {
           minViews = maxViews;
           maxViews = tempMinViews;
         }
+  
         if (maxLikes < minLikes) {
           setMaxVideoLikes(minLikes);
           setMinVideoLikes(maxLikes);
@@ -139,6 +182,7 @@ const SuggestVideosWithChannelUrl = () => {
           minLikes = maxLikes;
           maxLikes = tempMinLikes;
         }
+  
         return (
           likeCount >= minLikes &&
           likeCount <= maxLikes &&
@@ -157,6 +201,7 @@ const SuggestVideosWithChannelUrl = () => {
       setLoading(false);
     }
   };
+  
   
   
 

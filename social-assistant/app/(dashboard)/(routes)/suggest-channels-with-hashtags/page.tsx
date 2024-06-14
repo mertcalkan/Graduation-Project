@@ -96,7 +96,8 @@ const SuggestChannelsWithHashtags = () => {
   const handleSearch = async () => {
     setLoading(true);
 
-    const API_KEY = "AIzaSyBMepq0T0uNF6NVuWMI1skYVTs8HTTGEd0"; // API anahtarınızı buraya ekleyin
+    const API_KEY = "AIzaSyASFJquvesoqC9Yx06F0-Q1MswQfNJo8ZQ";  // API anahtarınızı buraya ekleyin
+    console.log(API_KEY)
     try {
       if (tags.length === 0) {
         setError("Please enter a tag.");
@@ -114,6 +115,7 @@ const SuggestChannelsWithHashtags = () => {
             ) {
               maxResults = 50;
             } else if (channelCount) {
+              console.log(2)
               maxResults = parseInt(channelCount);
             }
 
@@ -244,6 +246,7 @@ const SuggestChannelsWithHashtags = () => {
   
       const jsonIdeas = JSON.stringify(newChannelIdeas, null, 2);
   
+      setPopupData(jsonIdeas);
       setLoading(false);
       setError(null);
     } catch (error) {

@@ -77,7 +77,7 @@ const SuggestChannelsWithChannelUrl = () => {
 
   const handleSearch = async (channelUrl) => {
     setLoading(true);
-    const API_KEY = "AIzaSyBMepq0T0uNF6NVuWMI1skYVTs8HTTGEd0"; // API anahtarınızı burada tanımlayın
+    const API_KEY = "AIzaSyASFJquvesoqC9Yx06F0-Q1MswQfNJo8ZQ";
 
     const getChannelIdFromUrl = async (url) => {
       try {

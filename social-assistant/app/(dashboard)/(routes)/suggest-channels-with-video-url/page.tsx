@@ -45,55 +45,93 @@ const SuggestChannelsWithVideoUrl = () => {
   const [showCustomVideoCountRange, setShowCustomVideoCountRange] =
     useState(false);
 
-  const handleSearch = async () => {
-    setLoading(true);
-    const API_KEY = "YOUR_YOUTUBE_API_KEY"; // Replace with your YouTube API key
-    try {
-      if (!channelUrl.trim()) {
-        setError("Please enter a channel URL.");
-      } else {
-        if (maxVideos < minVideos) {
-          setMaxVideos(minVideos);
-          setMinVideos(maxVideos);
+    const handleSearch = async (channelUrl) => {
+      setLoading(true);
+    
+      try {
+        // Extract channel ID from the channel URL
+        const channelId = extractVideoId(channelUrl);
+    
+        if (!channelId) {
+          throw new Error("Invalid channel URL");
         }
-        if (maxSubscribers < minSubscribers) {
-          setMaxSubscribers(minSubscribers);
-          setMinSubscribers(maxSubscribers);
-        }
-
-        // Extract channel ID from the URL
-        const channelId = channelUrl.split("/").pop();
-
+    
+        const API_KEY = "AIzaSyASFJquvesoqC9Yx06F0-Q1MswQfNJo8ZQ"; // API anahtarınızı burada tanımlayın
+    
+        // Fetch channel details
         const response = await fetch(
           `https://www.googleapis.com/youtube/v3/channels?key=${API_KEY}&part=snippet,statistics&id=${channelId}`
         );
-        const data = await response.json();
-
-        if (data.items.length === 0) {
-          setError("Channel not found.");
-          setSearchResults([]);
-        } else {
-          const channelDetails = data.items[0];
-          setSearchResults([
-            {
-              id: channelDetails.id,
-              title: channelDetails.snippet.title,
-              description: channelDetails.snippet.description,
-              thumbnail: channelDetails.snippet.thumbnails.default.url,
-              subscribers: channelDetails.statistics.subscriberCount,
-              videos: channelDetails.statistics.videoCount,
-            },
-          ]);
-          setError(null); // Clear error when search succeeds
+    
+        if (!response.ok) {
+          throw new Error("Failed to fetch channel data");
         }
-      }
-    } catch (error) {
-      console.error("Error during search:", error);
-      setError("An error occurred during search.");
-    }
+    
+        const data = await response.json();
+    
+        if (!data.items || data.items.length === 0) {
+          throw new Error("Channel details not found");
+        }
+    
+        const channelDetails = data.items[0];
+        const channelKeywords = channelDetails.snippet.title.split(" ").join("+");
+        let maxResults = 10;
 
-    setLoading(false);
-  };
+        if (!channelCount && (!minSubscribers || !maxSubscribers) && (!minVideos || !maxVideos)) {
+          maxResults = 50;
+        } else if (channelCount) {
+          maxResults = parseInt(channelCount);
+        }
+        // Fetch related channels
+        const relatedChannelsResponse = await fetch(
+          `https://www.googleapis.com/youtube/v3/search?key=${API_KEY}&part=snippet&type=channel&maxResults=${maxResults}&q=${channelKeywords}`
+        );
+    
+        if (!relatedChannelsResponse.ok) {
+          throw new Error("Failed to fetch related channels");
+        }
+    
+        const relatedChannelsData = await relatedChannelsResponse.json();
+    
+        if (!relatedChannelsData.items || relatedChannelsData.items.length === 0) {
+          throw new Error("No related channels found");
+        }
+    
+        const relatedChannels = relatedChannelsData.items.map((item) => ({
+          id: item.id.channelId,
+          title: item.snippet.title,
+          description: item.snippet.description,
+          thumbnail: item.snippet.thumbnails.default.url,
+          channelUrl: `https://www.youtube.com/channel/${item.id.channelId}`,
+        }));
+    
+        setSearchResults(relatedChannels);
+        setError(null);
+      } catch (error) {
+        console.error("Error during channel search:", error);
+        setError("Failed to suggest similar channels");
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+   
+    
+    const extractVideoId = (videoUrl) => {
+      const url = new URL(videoUrl);
+      const searchParams = url.searchParams;
+      if (searchParams.has("v")) {
+        return searchParams.get("v");
+      } else {
+        const pathname = url.pathname;
+        const parts = pathname.split("/");
+        const idIndex = parts.indexOf("watch") + 1;
+        return parts[idIndex];
+      }
+    };
+    
+    
+    
 
   const generateIdeas = () => {
     console.log("Generating ideas for all results");
