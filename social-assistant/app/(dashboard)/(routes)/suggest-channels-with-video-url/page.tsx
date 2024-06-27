@@ -80,7 +80,7 @@ const SuggestChannelsWithVideoUrl = () => {
         console.log(videoId)
         if (!videoId) throw new Error("Invalid video URL");
   
-        const API_KEY = "AIzaSyBMepq0T0uNF6NVuWMI1skYVTs8HTTGEd0"
+        const API_KEY = "AIzaSyASFJquvesoqC9Yx06F0-Q1MswQfNJo8ZQ"
   
         const fetchVideoDetails = async (videoId) => {
           const response = await fetch(
@@ -161,7 +161,7 @@ const SuggestChannelsWithVideoUrl = () => {
   
           return response.json();
         };
-  
+        const uniqueChannels = [];
         const channels = await Promise.all(
           relatedVideos.map(async (video) => {
             const channelDetailsData = await fetchChannelDetails(video.channelId);
@@ -185,7 +185,16 @@ const SuggestChannelsWithVideoUrl = () => {
             };
           })
         );
-        const filteredChannels = channels.filter((channel) => {
+        const channelIds = new Set();
+      
+        channels.forEach((channel) => {
+          if (!channelIds.has(channel.id)) {
+            uniqueChannels.push(channel);
+            channelIds.add(channel.id);
+          }
+        });
+        
+        const filteredChannels =  uniqueChannels.filter((channel) => {
           let subscriberCount =
             parseInt(channel.subscribers.replace(/\D/g, "")) || 0;
           let videoCount = parseInt(channel.videoCount.replace(/\D/g, "")) || 0;

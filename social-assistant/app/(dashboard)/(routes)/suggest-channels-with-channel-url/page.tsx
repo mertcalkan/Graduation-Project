@@ -209,24 +209,26 @@ const SuggestChannelsWithChannelUrl = () => {
         const response = await fetch(
           `https://www.googleapis.com/youtube/v3/channels?key=${API_KEY}&part=snippet,statistics&id=${channelId}`
         );
-
+      
         if (!response.ok) {
           throw new Error("Failed to fetch channel details");
         }
-
-        return response.json();
+      
+        const data = await response.json();
+        if (!data.items || data.items.length === 0) {
+          throw new Error("Channel details not found");
+        }
+      
+        return data.items[0];
       };
-
+      const uniqueChannels = [];
       const channels = await Promise.all(
         relatedVideos.map(async (video) => {
-          const channelDetailsData = await fetchChannelDetails(video.channelId);
-          
-          if (!channelDetailsData.items || channelDetailsData.items.length === 0) {
-            throw new Error("Channel details not found");
-          }
-
-          const channelDetails = channelDetailsData.items[0];
-
+          const videoDetails = await fetchVideoDetails(video.id);
+          const channelId = videoDetails.items[0].snippet.channelId;
+      
+          const channelDetails = await fetchChannelDetails(channelId);
+      
           return {
             id: channelDetails.id,
             title: channelDetails.snippet.title,
@@ -240,15 +242,29 @@ const SuggestChannelsWithChannelUrl = () => {
           };
         })
       );
-      const filteredChannels = channels.filter((channel) => {
-        let subscriberCount =
-        parseInt(channel.subscribers.replace(/\D/g, "")) || 0;
+      
+      // Kanal ID'lerine göre filtreleyerek benzersiz kanalları alın
+      const channelIds = new Set();
+      
+      channels.forEach((channel) => {
+        if (!channelIds.has(channel.id)) {
+          uniqueChannels.push(channel);
+          channelIds.add(channel.id);
+        }
+      });
+      
+      // Benzersiz kanalları konsola yazdırın
+      console.log("Unique Channels:", uniqueChannels);
+      
+      const filteredChannels = uniqueChannels.filter((channel) => {
+        let subscriberCount = parseInt(channel.subscribers.replace(/\D/g, "")) || 0;
         let videoCount = parseInt(channel.videoCount.replace(/\D/g, "")) || 0;
-
+      
         let minSubs = parseInt(minSubscribers) || 0;
         let maxSubs = parseInt(maxSubscribers) || Infinity;
         let minVidCnt = parseInt(minVideos) || 0;
         let maxVidCnt = parseInt(maxVideos) || Infinity;
+      
         if (maxVidCnt < minVidCnt) {
           setMaxVideos(minVidCnt);
           setMinVideos(maxVidCnt);
@@ -256,6 +272,7 @@ const SuggestChannelsWithChannelUrl = () => {
           minVidCnt = maxVidCnt;
           maxVidCnt = tempMinVideos;
         }
+      
         if (maxSubs < minSubs) {
           setMaxSubscribers(minSubs);
           setMinSubscribers(maxSubs);
@@ -263,6 +280,7 @@ const SuggestChannelsWithChannelUrl = () => {
           minSubs = maxSubs;
           maxSubs = tempMinSubscribers;
         }
+      
         return (
           subscriberCount >= minSubs &&
           subscriberCount <= maxSubs &&
@@ -271,6 +289,10 @@ const SuggestChannelsWithChannelUrl = () => {
           (!channelCount || channels.length <= parseInt(channelCount))
         );
       });
+      
+      // Filtrelenmiş kanalları konsola yazdırın
+      console.log("Filtered Channels:", filteredChannels);
+      
       setSearchResults(filteredChannels);
       setError(null);
     
