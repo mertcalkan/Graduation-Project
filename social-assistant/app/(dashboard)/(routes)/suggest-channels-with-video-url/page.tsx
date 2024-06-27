@@ -4,37 +4,57 @@ import { Heading } from "@/components/heading";
 import { MessageCircleQuestion } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 
-const ChannelUrlInput = ({ channelUrl, setChannelUrl, handleSearch }) => {
-  const handleInputChange = (event) => {
-    setChannelUrl(event.target.value);
-  };
 
+
+  const isValidVideoUrl = (url) => {
+    const regex =
+      /^(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})$/;
+    return regex.test(url);
+  };
+  const ChannelUrlInput = ({ inputValue, setInputValue, handleSearch }) => {
+    const [error, setError] = useState("");
+  
+    const handleInputChange = (event) => {
+      const value = event.target.value;
+      setInputValue(value);
+      if (!isValidVideoUrl(value) && value != "") {
+        setError("Please enter a valid YouTube Video URL.");
+      } else {
+        setError("");
+      }
+    };
+    const handleSearchClick = () => {
+      console.log(inputValue);
+      handleSearch(inputValue);
+    };
   return (
     <div className="mt-4">
       <div className="flex items-center border border-gray-300 rounded-lg px-4 py-2">
         <input
           type="text"
-          value={channelUrl}
+          value={inputValue}
           onChange={handleInputChange}
           placeholder={"Enter the Video Url"}
           className="w-full focus:outline-none rounded-lg"
         />
         <button
-          onClick={handleSearch}
+          onClick={handleSearchClick}
           className="ml-2 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg"
         >
           Search
         </button>
       </div>
+      {error && <div className="mt-2 text-red-500">{error}</div>}
     </div>
   );
 };
 
 const SuggestChannelsWithVideoUrl = () => {
-  const [channelUrl, setChannelUrl] = useState("");
+  const [inputValue, setInputValue] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [searchResults, setSearchResults] = useState([]);
+  const [popupData, setPopupData] = useState(null);
   const [channelCount, setChannelCount] = useState("");
   const [minSubscribers, setMinSubscribers] = useState("");
   const [maxSubscribers, setMaxSubscribers] = useState("");
@@ -44,91 +64,171 @@ const SuggestChannelsWithVideoUrl = () => {
     useState(false);
   const [showCustomVideoCountRange, setShowCustomVideoCountRange] =
     useState(false);
-
-    const handleSearch = async (channelUrl) => {
+    const handlePopupOpen = (data) => {
+      setPopupData(data);
+    };
+  
+    const handlePopupClose = () => {
+      setPopupData(null);
+    };
+    const handleSearch = async (videoUrl) => {
       setLoading(true);
-    
+  
       try {
-        // Extract channel ID from the channel URL
-        const channelId = extractVideoId(channelUrl);
-    
-        if (!channelId) {
-          throw new Error("Invalid channel URL");
+        const videoId = new URL(videoUrl).searchParams.get("v");
+        console.log(videoUrl)
+        console.log(videoId)
+        if (!videoId) throw new Error("Invalid video URL");
+  
+        const API_KEY = "AIzaSyBMepq0T0uNF6NVuWMI1skYVTs8HTTGEd0"
+  
+        const fetchVideoDetails = async (videoId) => {
+          const response = await fetch(
+            `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&id=${videoId}&key=${API_KEY}`
+          );
+  
+          if (!response.ok) {
+            throw new Error("Failed to fetch video details");
+          }
+  
+          return response.json();
+        };
+  
+        const videoDetailsData = await fetchVideoDetails(videoId);
+  
+        if (!videoDetailsData.items || videoDetailsData.items.length === 0) {
+          throw new Error("Video details not found");
         }
-    
-        const API_KEY = "AIzaSyASFJquvesoqC9Yx06F0-Q1MswQfNJo8ZQ"; // API anahtarınızı burada tanımlayın
-    
-        // Fetch channel details
-        const response = await fetch(
-          `https://www.googleapis.com/youtube/v3/channels?key=${API_KEY}&part=snippet,statistics&id=${channelId}`
+  
+        const videoDetails = videoDetailsData.items[0];
+        const categoryId = videoDetails.snippet.categoryId;
+        const keywords = videoDetails.snippet.title.split(" ").join("+");
+  
+        const fetchRelatedVideos = async (keywords, categoryId) => {
+          let maxResults = 10;
+  
+          if (!channelCount && !minSubscribers && !maxSubscribers && !minVideos && !maxVideos) {
+            maxResults = 50;
+          } else if (channelCount) {
+            maxResults = parseInt(channelCount);
+          }
+  
+          const response = await fetch(
+            `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=${maxResults}&key=${API_KEY}&q=${keywords}&videoCategoryId=${categoryId}`
+          );
+  
+          if (!response.ok) {
+            throw new Error("Failed to fetch related videos");
+          }
+  
+          return response.json();
+        };
+  
+        const relatedVideosData = await fetchRelatedVideos(keywords, categoryId);
+  
+        if (!relatedVideosData.items || relatedVideosData.items.length === 0) {
+          throw new Error("No related videos found");
+        }
+  
+        const relatedVideos = await Promise.all(
+          relatedVideosData.items.map(async (item) => {
+            const id = item.id.videoId || item.id;
+            const videoData = await fetchVideoDetails(id);
+            const video = videoData.items[0];
+  
+            return {
+              id,
+              title: video.snippet.title,
+              description: video.snippet.description,
+              thumbnail: video.snippet.thumbnails.default.url,
+              url: `https://www.youtube.com/watch?v=${id}`,
+              viewCount: video.statistics?.viewCount || "N/A",
+              likeCount: video.statistics?.likeCount || "N/A",
+              publishedAt: video.snippet.publishedAt,
+              channelId: video.snippet.channelId,
+            };
+          })
         );
-    
-        if (!response.ok) {
-          throw new Error("Failed to fetch channel data");
-        }
-    
-        const data = await response.json();
-    
-        if (!data.items || data.items.length === 0) {
-          throw new Error("Channel details not found");
-        }
-    
-        const channelDetails = data.items[0];
-        const channelKeywords = channelDetails.snippet.title.split(" ").join("+");
-        let maxResults = 10;
+  
+        const fetchChannelDetails = async (channelId) => {
+          const response = await fetch(
+            `https://www.googleapis.com/youtube/v3/channels?key=${API_KEY}&part=snippet,statistics&id=${channelId}`
+          );
+  
+          if (!response.ok) {
+            throw new Error("Failed to fetch channel details");
+          }
+  
+          return response.json();
+        };
+  
+        const channels = await Promise.all(
+          relatedVideos.map(async (video) => {
+            const channelDetailsData = await fetchChannelDetails(video.channelId);
+  
+            if (!channelDetailsData.items || channelDetailsData.items.length === 0) {
+              throw new Error("Channel details not found");
+            }
+  
+            const channelDetails = channelDetailsData.items[0];
+  
+            return {
+              id: channelDetails.id,
+              title: channelDetails.snippet.title,
+              description: channelDetails.snippet.description,
+              thumbnail: channelDetails.snippet.thumbnails?.default?.url,
+              subscribers: channelDetails.statistics?.subscriberCount || 0,
+              viewCount: channelDetails.statistics?.viewCount || 0,
+              videoCount: channelDetails.statistics?.videoCount || 0,
+              country: channelDetails.snippet.country,
+              url: `https://www.youtube.com/channel/${channelDetails.id}`,
+            };
+          })
+        );
+        const filteredChannels = channels.filter((channel) => {
+          let subscriberCount =
+            parseInt(channel.subscribers.replace(/\D/g, "")) || 0;
+          let videoCount = parseInt(channel.videoCount.replace(/\D/g, "")) || 0;
 
-        if (!channelCount && (!minSubscribers || !maxSubscribers) && (!minVideos || !maxVideos)) {
-          maxResults = 50;
-        } else if (channelCount) {
-          maxResults = parseInt(channelCount);
-        }
-        // Fetch related channels
-        const relatedChannelsResponse = await fetch(
-          `https://www.googleapis.com/youtube/v3/search?key=${API_KEY}&part=snippet&type=channel&maxResults=${maxResults}&q=${channelKeywords}`
-        );
-    
-        if (!relatedChannelsResponse.ok) {
-          throw new Error("Failed to fetch related channels");
-        }
-    
-        const relatedChannelsData = await relatedChannelsResponse.json();
-    
-        if (!relatedChannelsData.items || relatedChannelsData.items.length === 0) {
-          throw new Error("No related channels found");
-        }
-    
-        const relatedChannels = relatedChannelsData.items.map((item) => ({
-          id: item.id.channelId,
-          title: item.snippet.title,
-          description: item.snippet.description,
-          thumbnail: item.snippet.thumbnails.default.url,
-          channelUrl: `https://www.youtube.com/channel/${item.id.channelId}`,
-        }));
-    
-        setSearchResults(relatedChannels);
+          let minSubs = parseInt(minSubscribers) || 0;
+          let maxSubs = parseInt(maxSubscribers) || Infinity;
+          let minVidCnt = parseInt(minVideos) || 0;
+          let maxVidCnt = parseInt(maxVideos) || Infinity;
+          if (maxVidCnt < minVidCnt) {
+            setMaxVideos(minVidCnt);
+            setMinVideos(maxVidCnt);
+            let tempMinVideos = minVidCnt;
+            minVidCnt = maxVidCnt;
+            maxVidCnt = tempMinVideos;
+          }
+          if (maxSubs < minSubs) {
+            setMaxSubscribers(minSubs);
+            setMinSubscribers(maxSubs);
+            let tempMinSubscribers = minSubs;
+            minSubs = maxSubs;
+            maxSubs = tempMinSubscribers;
+          }
+          return (
+            subscriberCount >= minSubs &&
+            subscriberCount <= maxSubs &&
+            videoCount >= minVidCnt &&
+            videoCount <= maxVidCnt &&
+            (!channelCount || channels.length <= parseInt(channelCount))
+          );
+        });
+        setSearchResults(filteredChannels);
         setError(null);
       } catch (error) {
-        console.error("Error during channel search:", error);
+        console.error("Error during video search:", error);
         setError("Failed to suggest similar channels");
       } finally {
         setLoading(false);
       }
     };
     
+    
    
     
-    const extractVideoId = (videoUrl) => {
-      const url = new URL(videoUrl);
-      const searchParams = url.searchParams;
-      if (searchParams.has("v")) {
-        return searchParams.get("v");
-      } else {
-        const pathname = url.pathname;
-        const parts = pathname.split("/");
-        const idIndex = parts.indexOf("watch") + 1;
-        return parts[idIndex];
-      }
-    };
     
     
     
@@ -308,9 +408,9 @@ const SuggestChannelsWithVideoUrl = () => {
           Search the channel based on your taste!
         </h1>
         <ChannelUrlInput
-          channelUrl={channelUrl}
-          setChannelUrl={setChannelUrl}
-          handleSearch={handleSearch}
+       inputValue={inputValue}
+       setInputValue={setInputValue}
+       handleSearch={handleSearch}
         />
       </div>
 
@@ -321,11 +421,27 @@ const SuggestChannelsWithVideoUrl = () => {
       )}
       {error && <div className="mt-2 text-red-500 text-center">{error}</div>}
       <div className="grid grid-cols-3 gap-4 mt-4">
-        {searchResults.map((result, index) => (
-          <div key={index} className="border p-4 ml-8 mr-8 ">
+      {searchResults.map((result, index) => (
+          <div
+            key={index}
+            className="border p-4 ml-8 mr-8 "
+            onClick={() => handlePopupOpen(result)}
+          >
             <img src={result.thumbnail} alt="Thumbnail" className="mt-2" />
             <h3 className="text-lg font-semibold">{result.title}</h3>
-            <p className="text-gray-600">{result.description}</p>
+            <p className="text-gray-600">
+              {result.description.length > 150
+                ? `${result.description.slice(0, 150)}...`
+                : result.description}
+              {result.description.length > 150 && (
+                <span
+                  className="text-blue-500 cursor-pointer"
+                  onClick={() => handlePopupOpen(result)}
+                >
+                  {" Daha Fazlasını Gör"}
+                </span>
+              )}
+            </p>
           </div>
         ))}
       </div>
@@ -339,6 +455,54 @@ const SuggestChannelsWithVideoUrl = () => {
           </button>
         </div>
       )}
+     {popupData && (
+        <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white p-8 rounded-lg w-3/4 max-w-sm max-h-screen overflow-y-auto">
+            <h2 className="text-lg font-semibold mb-8">Channel Information</h2>
+            <img src={popupData.thumbnail} alt="Thumbnail" className="mt-2" />
+
+            <h2 className="text-lg font-semibold">{popupData.title}</h2>
+            <p className="text-gray-600 mb-4">{popupData.description}</p>
+            <p className="text-gray-600">
+              Subscribers:{" "}
+              {new Intl.NumberFormat("en-US", {
+                notation: "compact",
+                compactDisplay: "short",
+              }).format(popupData.subscribers)}
+              <br />
+              Views:{" "}
+              {new Intl.NumberFormat("en-US", {
+                notation: "compact",
+                compactDisplay: "short",
+              }).format(popupData.viewCount)}
+              <br />
+              Video Count:{" "}
+              {new Intl.NumberFormat("en-US", {
+                notation: "compact",
+                compactDisplay: "short",
+              }).format(popupData.videoCount)}
+              <br />
+              Country: {popupData.country}
+              <br />
+              URL:{" "}
+              <a
+                  href={popupData.url}
+                  target="_blank"
+                  className="text-blue-500"
+                >
+                  {popupData.url}
+                </a>
+            </p>
+            <button
+              className="mt-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg"
+              onClick={handlePopupClose}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+        )}
+     
     </div>
   );
 };

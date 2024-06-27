@@ -242,10 +242,6 @@ const SuggestVideosWithChannelUrl = () => {
   };
   
   
-
-  
-  
-
   const generateIdeas = () => {
     console.log("Generating ideas for all results");
   };
