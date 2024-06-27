@@ -118,6 +118,7 @@ const SuggestVideosWithVideoUrl = () => {
       };
 
       const relatedVideosData = await fetchRelatedVideos(keywords, categoryId);
+      console.log(relatedVideosData)
 
       if (!relatedVideosData.items || relatedVideosData.items.length === 0) {
         throw new Error("No related videos found");

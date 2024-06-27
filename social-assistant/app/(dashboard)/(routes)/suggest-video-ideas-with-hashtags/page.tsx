@@ -119,10 +119,19 @@ const SuggestVideosWithHashtag = () => {
               )}`
             );
             const data = await response.json();
-            return data.items;
+            return data.items || [];
           })
         );
-
+        
+        const fetchVideoDetails = async (videoIds) => {
+          const ids = videoIds.join(",");
+          const response = await fetch(
+            `https://www.googleapis.com/youtube/v3/videos?key=${API_KEY}&part=statistics&id=${ids}`
+          );
+          const data = await response.json();
+          return data.items || [];
+        };
+        
         // Flatten video results
         const videos = videoResults.flatMap((items) =>
           items.map((item) => ({
@@ -131,20 +140,32 @@ const SuggestVideosWithHashtag = () => {
             description: item.snippet.description,
             thumbnail: item.snippet.thumbnails.default.url,
             url: `https://www.youtube.com/watch?v=${item.id.videoId}`,
-            viewCount: "N/A", // View count will be fetched later
-            likeCount: "N/A", // Like count will be fetched later
             publishedAt: item.snippet.publishedAt,
           }))
         );
-
-        const filteredVideos = videos.filter((video) => {
-          let likeCount = parseInt(video.likeCount.replace(/\D/g, "")) || 0;
-          let viewCount = parseInt(video.viewCount.replace(/\D/g, "")) || 0;
-
+        
+        const videoIds = videos.map((video) => video.id);
+        
+        const videoDetails = await fetchVideoDetails(videoIds);
+        
+        const videosWithDetails = videos.map((video) => {
+          const details = videoDetails.find((detail) => detail.id === video.id);
+          return {
+            ...video,
+            viewCount: details?.statistics?.viewCount || "N/A",
+            likeCount: details?.statistics?.likeCount || "N/A",
+          };
+        });
+        
+        const filteredVideos = videosWithDetails.filter((video) => {
+          let likeCount = video.likeCount !== "N/A" ? parseInt(video.likeCount.replace(/\D/g, "")) : 0;
+          let viewCount = video.viewCount !== "N/A" ? parseInt(video.viewCount.replace(/\D/g, "")) : 0;
+        
           let minLikes = parseInt(minVideoLikes) || 0;
           let maxLikes = parseInt(maxVideoLikes) || Infinity;
           let minViews = parseInt(minVideoViews) || 0;
           let maxViews = parseInt(maxVideoViews) || Infinity;
+        
           if (maxViews < minViews) {
             setMaxVideoViews(minViews);
             setMinVideoViews(maxViews);
@@ -152,6 +173,7 @@ const SuggestVideosWithHashtag = () => {
             minViews = maxViews;
             maxViews = tempMinViews;
           }
+        
           if (maxLikes < minLikes) {
             setMaxVideoLikes(minLikes);
             setMinVideoLikes(maxLikes);
@@ -159,12 +181,13 @@ const SuggestVideosWithHashtag = () => {
             minLikes = maxLikes;
             maxLikes = tempMinLikes;
           }
+        
           return (
             likeCount >= minLikes &&
             likeCount <= maxLikes &&
             viewCount >= minViews &&
             viewCount <= maxViews &&
-            (!videoCount || videos.length <= parseInt(videoCount))
+            (!videoCount || videosWithDetails.length <= parseInt(videoCount))
           );
         });
         setSearchResults(filteredVideos);
