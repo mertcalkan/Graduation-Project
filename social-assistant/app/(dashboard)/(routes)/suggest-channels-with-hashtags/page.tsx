@@ -159,6 +159,7 @@ const SuggestChannelsWithHashtags = () => {
             viewCount: item.statistics?.viewCount || 0,
             videoCount: item.statistics?.videoCount || 0,
             country: item.snippet.country,
+             url: `https://www.youtube.com/channel/${item.id}`
           }))
         
 
@@ -217,7 +218,7 @@ const SuggestChannelsWithHashtags = () => {
       const prompt = `Create new YouTube channel ideas based on the following channels:\n\n${searchResults
         .map(
           (channel) =>
-            `Title: ${channel.title}, Description: ${channel.description}, Subscribers: ${channel.subscribers}, Video Count: ${channel.videoCount}, Country: ${channel.country}`
+            `Title: ${channel.title}, Description: ${channel.description}, Subscribers: ${channel.subscribers}, Video Count: ${channel.videoCount}, Country: ${channel.country}, Channel Url: ${channel.url}`
         )
         .join("\n\n")}\n\nPlease provide unique and creative channel ideas with titles and descriptions.`;
   
@@ -510,6 +511,15 @@ const SuggestChannelsWithHashtags = () => {
               }).format(popupData.videoCount)}
               <br />
               Country: {popupData.country}
+              <br />
+              URL:{" "}
+              <a
+                  href={popupData.url}
+                  target="_blank"
+                  className="text-blue-500"
+                >
+                  {popupData.url}
+                </a>
             </p>
             <button
               className="mt-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg"
