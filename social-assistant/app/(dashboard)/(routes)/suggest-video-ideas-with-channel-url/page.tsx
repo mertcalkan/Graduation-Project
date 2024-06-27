@@ -79,7 +79,7 @@ const SuggestVideosWithChannelUrl = () => {
 
   const handleSearch = async (channelUrl) => {
     setLoading(true);
-    const API_KEY = "AIzaSyBMepq0T0uNF6NVuWMI1skYVTs8HTTGEd0"
+    const API_KEY = "AIzaSyASFJquvesoqC9Yx06F0-Q1MswQfNJo8ZQ"
   
     try {
       let channelId;
@@ -127,7 +127,7 @@ const SuggestVideosWithChannelUrl = () => {
         return response.json();
       };
   
-      const fetchRelatedVideos = async (keywords, categoryId) => {
+      const fetchRelatedVideos = async (keywords, categoryId, videoCount) => {
         let maxResults = 10;
 
         if (!videoCount && (!minVideoLikes || !maxVideoLikes) && (!minVideoViews || !maxVideoViews)) {
