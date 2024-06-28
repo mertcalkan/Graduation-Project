@@ -460,12 +460,12 @@ const SuggestVideosWithChannelUrl = () => {
 
         {searchResults.length > 0 && (
           <div className="mt-4 text-center">
-            <button
+            {/* <button
               onClick={generateIdeas}
               className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg"
             >
               Generate Channel Ideas
-            </button>
+            </button> */}
           </div>
         )}
 

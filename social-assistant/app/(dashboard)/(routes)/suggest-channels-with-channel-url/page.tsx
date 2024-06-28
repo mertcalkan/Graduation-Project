@@ -221,7 +221,7 @@ const SuggestChannelsWithChannelUrl = () => {
       
         return data.items[0];
       };
-      const uniqueChannels = [];
+      
       const channels = await Promise.all(
         relatedVideos.map(async (video) => {
           const videoDetails = await fetchVideoDetails(video.id);
@@ -245,6 +245,7 @@ const SuggestChannelsWithChannelUrl = () => {
       
       // Kanal ID'lerine göre filtreleyerek benzersiz kanalları alın
       const channelIds = new Set();
+      const uniqueChannels = [];
       
       channels.forEach((channel) => {
         if (!channelIds.has(channel.id)) {
@@ -253,7 +254,7 @@ const SuggestChannelsWithChannelUrl = () => {
         }
       });
       
-      // Benzersiz kanalları konsola yazdırın
+      // Log unique channels
       console.log("Unique Channels:", uniqueChannels);
       
       const filteredChannels = uniqueChannels.filter((channel) => {
@@ -281,19 +282,30 @@ const SuggestChannelsWithChannelUrl = () => {
           maxSubs = tempMinSubscribers;
         }
       
-        return (
+        const passesFilter =
           subscriberCount >= minSubs &&
           subscriberCount <= maxSubs &&
           videoCount >= minVidCnt &&
-          videoCount <= maxVidCnt &&
-          (!channelCount || channels.length <= parseInt(channelCount))
-        );
+          videoCount <= maxVidCnt;
+      
+        // Log filtering result for each channel
+        console.log(`Channel ID: ${channel.id}, Passes Filter: ${passesFilter}`);
+        return passesFilter;
       });
       
-      // Filtrelenmiş kanalları konsola yazdırın
-      console.log("Filtered Channels:", filteredChannels);
+      // Log filtered channels before limiting the count
+      console.log("Filtered Channels before limiting:", filteredChannels);
       
-      setSearchResults(filteredChannels);
+      // Limit the number of filtered channels to the specified channelCount
+      const limitedFilteredChannels = filteredChannels.slice(0, parseInt(channelCount) || filteredChannels.length);
+      
+      // Log final result
+      console.log("Final Filtered Channels:", limitedFilteredChannels);
+      
+      setSearchResults(limitedFilteredChannels);
+      
+      // Filtrelenmiş kanalları konsola yazdırın
+     
       setError(null);
     
     }catch (error) {
@@ -521,12 +533,12 @@ const SuggestChannelsWithChannelUrl = () => {
 
         {searchResults.length > 0 && (
           <div className="mt-4 text-center">
-            <button
+            {/* <button
               onClick={generateIdeas}
               className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg"
             >
               Generate Channel Ideas
-            </button>
+            </button> */}
           </div>
         )}
 

@@ -6,11 +6,10 @@ import { Progress } from "@/components/ui/progress";
 
 
 
-  const isValidVideoUrl = (url) => {
-    const regex =
-      /^(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})$/;
-    return regex.test(url);
-  };
+const isValidVideoUrl = (url) => {
+  const regex = /^(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})(\S+)?$/;
+  return regex.test(url);
+};
   const ChannelUrlInput = ({ inputValue, setInputValue, handleSearch }) => {
     const [error, setError] = useState("");
   
@@ -73,69 +72,69 @@ const SuggestChannelsWithVideoUrl = () => {
     };
     const handleSearch = async (videoUrl) => {
       setLoading(true);
-  
+    
       try {
         const videoId = new URL(videoUrl).searchParams.get("v");
-        console.log(videoUrl)
-        console.log(videoId)
+        console.log(videoUrl);
+        console.log(videoId);
         if (!videoId) throw new Error("Invalid video URL");
-  
-        const API_KEY = "AIzaSyASFJquvesoqC9Yx06F0-Q1MswQfNJo8ZQ"
-  
+    
+        const API_KEY = "AIzaSyASFJquvesoqC9Yx06F0-Q1MswQfNJo8ZQ";
+    
         const fetchVideoDetails = async (videoId) => {
           const response = await fetch(
             `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&id=${videoId}&key=${API_KEY}`
           );
-  
+    
           if (!response.ok) {
             throw new Error("Failed to fetch video details");
           }
-  
+    
           return response.json();
         };
-  
+    
         const videoDetailsData = await fetchVideoDetails(videoId);
-  
+    
         if (!videoDetailsData.items || videoDetailsData.items.length === 0) {
           throw new Error("Video details not found");
         }
-  
+    
         const videoDetails = videoDetailsData.items[0];
         const categoryId = videoDetails.snippet.categoryId;
         const keywords = videoDetails.snippet.title.split(" ").join("+");
-  
+    
         const fetchRelatedVideos = async (keywords, categoryId) => {
           let maxResults = 10;
-  
+    
           if (!channelCount && !minSubscribers && !maxSubscribers && !minVideos && !maxVideos) {
             maxResults = 50;
           } else if (channelCount) {
             maxResults = parseInt(channelCount);
           }
-  
+    
           const response = await fetch(
             `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=${maxResults}&key=${API_KEY}&q=${keywords}&videoCategoryId=${categoryId}`
           );
-  
+    
           if (!response.ok) {
             throw new Error("Failed to fetch related videos");
           }
-  
+    
           return response.json();
         };
-  
+    
         const relatedVideosData = await fetchRelatedVideos(keywords, categoryId);
-  
+    
         if (!relatedVideosData.items || relatedVideosData.items.length === 0) {
           throw new Error("No related videos found");
         }
-  
+    
         const relatedVideos = await Promise.all(
           relatedVideosData.items.map(async (item) => {
             const id = item.id.videoId || item.id;
             const videoData = await fetchVideoDetails(id);
             const video = videoData.items[0];
-  
+    
             return {
               id,
               title: video.snippet.title,
@@ -149,29 +148,30 @@ const SuggestChannelsWithVideoUrl = () => {
             };
           })
         );
-  
+    
         const fetchChannelDetails = async (channelId) => {
           const response = await fetch(
             `https://www.googleapis.com/youtube/v3/channels?key=${API_KEY}&part=snippet,statistics&id=${channelId}`
           );
-  
+    
           if (!response.ok) {
             throw new Error("Failed to fetch channel details");
           }
-  
+    
           return response.json();
         };
+    
         const uniqueChannels = [];
         const channels = await Promise.all(
           relatedVideos.map(async (video) => {
             const channelDetailsData = await fetchChannelDetails(video.channelId);
-  
+    
             if (!channelDetailsData.items || channelDetailsData.items.length === 0) {
               throw new Error("Channel details not found");
             }
-  
+    
             const channelDetails = channelDetailsData.items[0];
-  
+    
             return {
               id: channelDetails.id,
               title: channelDetails.snippet.title,
@@ -185,24 +185,24 @@ const SuggestChannelsWithVideoUrl = () => {
             };
           })
         );
+    
         const channelIds = new Set();
-      
         channels.forEach((channel) => {
           if (!channelIds.has(channel.id)) {
             uniqueChannels.push(channel);
             channelIds.add(channel.id);
           }
         });
-        
-        const filteredChannels =  uniqueChannels.filter((channel) => {
-          let subscriberCount =
-            parseInt(channel.subscribers.replace(/\D/g, "")) || 0;
-          let videoCount = parseInt(channel.videoCount.replace(/\D/g, "")) || 0;
-
+    
+        const filteredChannels = uniqueChannels.filter((channel) => {
+          let subscriberCount = parseInt(channel.subscribers) || 0;
+          let videoCount = parseInt(channel.videoCount) || 0;
+    
           let minSubs = parseInt(minSubscribers) || 0;
           let maxSubs = parseInt(maxSubscribers) || Infinity;
           let minVidCnt = parseInt(minVideos) || 0;
           let maxVidCnt = parseInt(maxVideos) || Infinity;
+    
           if (maxVidCnt < minVidCnt) {
             setMaxVideos(minVidCnt);
             setMinVideos(maxVidCnt);
@@ -210,6 +210,7 @@ const SuggestChannelsWithVideoUrl = () => {
             minVidCnt = maxVidCnt;
             maxVidCnt = tempMinVideos;
           }
+    
           if (maxSubs < minSubs) {
             setMaxSubscribers(minSubs);
             setMinSubscribers(maxSubs);
@@ -217,14 +218,16 @@ const SuggestChannelsWithVideoUrl = () => {
             minSubs = maxSubs;
             maxSubs = tempMinSubscribers;
           }
+    
           return (
             subscriberCount >= minSubs &&
             subscriberCount <= maxSubs &&
             videoCount >= minVidCnt &&
             videoCount <= maxVidCnt &&
-            (!channelCount || channels.length <= parseInt(channelCount))
+            (!channelCount || uniqueChannels.length <= parseInt(channelCount))
           );
         });
+    
         setSearchResults(filteredChannels);
         setError(null);
       } catch (error) {
@@ -456,12 +459,12 @@ const SuggestChannelsWithVideoUrl = () => {
       </div>
       {searchResults.length > 0 && (
         <div className="mt-4 text-center">
-          <button
+          {/* <button
             onClick={generateIdeas}
             className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg"
           >
             Generate Channel Ideas
-          </button>
+          </button> */}
         </div>
       )}
      {popupData && (

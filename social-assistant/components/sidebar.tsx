@@ -16,7 +16,7 @@ const routes = [
     { label: "Suggest Video Ideas With Channel Links", icon: MessageCircleQuestion, href: "/suggest-video-ideas-with-channel-url", color: "text-green-500" },
     { label: "Suggest Video Ideas With Video Links", icon: MessageCircleQuestion, href: "/suggest-video-ideas-with-video-url", color: "text-yellow-500" },
     
-    { label: "Settings", icon: SettingsIcon, href: "/settings", color: "text-gray-400" },
+   
 ];
 
 const Sidebar = () => {
