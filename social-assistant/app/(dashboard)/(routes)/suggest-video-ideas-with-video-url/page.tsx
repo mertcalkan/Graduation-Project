@@ -184,32 +184,6 @@ const SuggestVideosWithVideoUrl = () => {
     }
   };
 
-  const generateIdeas = async () => {
-    try {
-        const response = await axios.post('/api/generate', { videoResults: searchResults });
-
-        if (!response.data) {
-            throw new Error('Empty response received from server');
-        }
-
-        console.log('Response data:', response.data);
-
-        if (!response.data.ideas) {
-            throw new Error('No ideas found in response');
-        }
-
-        console.log(response.data.ideas);
-    } catch (error) {
-        if (error.response) {
-            console.error('HTTP error:', error.response.status);
-            console.error('Error data:', error.response.data);
-        } else if (error.request) {
-            console.error('Request error:', error.request);
-        } else {
-            console.error('Error:', error.message);
-        }
-    }
-};
 
   
   return (
@@ -416,7 +390,7 @@ const SuggestVideosWithVideoUrl = () => {
                     className="text-blue-500 cursor-pointer"
                     onClick={() => handlePopupOpen(result)}
                   >
-                    {" Daha Fazlasını Gör"}
+                    {"See more"}
                   </span>
                 )}
               </p>
@@ -424,16 +398,7 @@ const SuggestVideosWithVideoUrl = () => {
           ))}
         </div>
 
-        {searchResults.length > 0 && (
-          <div className="mt-4 text-center">
-            {/* <button
-              onClick={generateIdeas}
-              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg"
-            >
-              Generate Channel Ideas
-            </button> */}
-          </div>
-        )}
+     
 
         {popupData && (
           <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black bg-opacity-50">

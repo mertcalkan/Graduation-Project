@@ -240,15 +240,7 @@ const SuggestChannelsWithVideoUrl = () => {
     
     
    
-    
-    
-    
-    
-
-  const generateIdeas = () => {
-    console.log("Generating ideas for all results");
-  };
-
+  
   return (
     <div>
       <Heading
@@ -450,23 +442,14 @@ const SuggestChannelsWithVideoUrl = () => {
                   className="text-blue-500 cursor-pointer"
                   onClick={() => handlePopupOpen(result)}
                 >
-                  {" Daha Fazlasını Gör"}
+                  {"See More"}
                 </span>
               )}
             </p>
           </div>
         ))}
       </div>
-      {searchResults.length > 0 && (
-        <div className="mt-4 text-center">
-          {/* <button
-            onClick={generateIdeas}
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg"
-          >
-            Generate Channel Ideas
-          </button> */}
-        </div>
-      )}
+    
      {popupData && (
         <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black bg-opacity-50">
           <div className="bg-white p-8 rounded-lg w-3/4 max-w-sm max-h-screen overflow-y-auto">
