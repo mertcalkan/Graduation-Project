@@ -94,7 +94,7 @@ const SuggestVideosWithHashtag = () => {
   const handleSearch = async () => {
     setLoading(true);
 
-    const API_KEY = "AIzaSyBMepq0T0uNF6NVuWMI1skYVTs8HTTGEd0"; // API anahtarınızı burada tanımlayın
+    const API_KEY = process.env.GOOGLE_API_KEY_1 || process.env.GOOGLE_API_KEY_2
 
     try {
       if (tags.length === 0) {

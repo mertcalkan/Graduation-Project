@@ -23,7 +23,6 @@ const isValidVideoUrl = (url) => {
       }
     };
     const handleSearchClick = () => {
-      console.log(inputValue);
       handleSearch(inputValue);
     };
   return (
@@ -75,11 +74,9 @@ const SuggestChannelsWithVideoUrl = () => {
     
       try {
         const videoId = new URL(videoUrl).searchParams.get("v");
-        console.log(videoUrl);
-        console.log(videoId);
         if (!videoId) throw new Error("Invalid video URL");
     
-        const API_KEY = "AIzaSyASFJquvesoqC9Yx06F0-Q1MswQfNJo8ZQ";
+        const API_KEY = process.env.GOOGLE_API_KEY_1 || process.env.GOOGLE_API_KEY_2
     
         const fetchVideoDetails = async (videoId) => {
           const response = await fetch(

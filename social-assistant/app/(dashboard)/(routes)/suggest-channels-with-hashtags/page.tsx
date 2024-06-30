@@ -95,8 +95,8 @@ const SuggestChannelsWithHashtags = () => {
   const handleSearch = async () => {
     setLoading(true);
 
-    const API_KEY = "AIzaSyASFJquvesoqC9Yx06F0-Q1MswQfNJo8ZQ";  // API anahtarınızı buraya ekleyin
-    console.log(API_KEY)
+    const API_KEY = process.env.GOOGLE_API_KEY_1 || process.env.GOOGLE_API_KEY_2 // API anahtarınızı buraya ekleyin
+  
     try {
       if (tags.length === 0) {
         setError("Please enter a tag.");
@@ -114,7 +114,6 @@ const SuggestChannelsWithHashtags = () => {
             ) {
               maxResults = 50;
             } else if (channelCount) {
-              console.log(2)
               maxResults = parseInt(channelCount);
             }
 

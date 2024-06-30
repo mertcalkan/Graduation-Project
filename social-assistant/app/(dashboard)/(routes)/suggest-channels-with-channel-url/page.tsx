@@ -26,7 +26,6 @@ const ChannelUrlInput = ({ inputValue, setInputValue, handleSearch }) => {
   };
 
   const handleSearchClick = () => {
-    console.log(inputValue);
     handleSearch(inputValue);
   };
 
@@ -78,7 +77,7 @@ const SuggestChannelsWithChannelUrl = () => {
 
   const handleSearch = async (channelUrl) => {
     setLoading(true);
-    const API_KEY = "AIzaSyASFJquvesoqC9Yx06F0-Q1MswQfNJo8ZQ"
+    const API_KEY = process.env.GOOGLE_API_KEY_1 || process.env.GOOGLE_API_KEY_2
   
     try {
       let channelId;
@@ -100,7 +99,6 @@ const SuggestChannelsWithChannelUrl = () => {
         throw new Error("Invalid channel URL format");
       }
   
-      console.log("Channel ID:", channelId);
   
       const fetchChannelPopularVideo = async (channelId) => {
         const response = await fetch(
@@ -135,7 +133,6 @@ const SuggestChannelsWithChannelUrl = () => {
             ) {
               maxResults = 50;
             } else if (channelCount) {
-              console.log(2)
               maxResults = parseInt(channelCount);
             }
         const response = await fetch(
@@ -150,7 +147,6 @@ const SuggestChannelsWithChannelUrl = () => {
       };
   
       const channelPopularVideoData = await fetchChannelPopularVideo(channelId);
-      console.log("Channel Popular Video Data:", channelPopularVideoData);
   
       if (!channelPopularVideoData.items || channelPopularVideoData.items.length === 0) {
         throw new Error("No popular videos found for the channel");
@@ -181,7 +177,6 @@ const SuggestChannelsWithChannelUrl = () => {
       const categoryId = videoDetails.snippet.categoryId;
   
       const relatedVideosData = await fetchRelatedVideos(keywords, categoryId);
-      console.log(relatedVideosData);
   
       if (!relatedVideosData.items || relatedVideosData.items.length === 0) {
         throw new Error("No related videos found");
@@ -255,7 +250,6 @@ const SuggestChannelsWithChannelUrl = () => {
       });
       
       // Log unique channels
-      console.log("Unique Channels:", uniqueChannels);
       
       const filteredChannels = uniqueChannels.filter((channel) => {
         let subscriberCount = parseInt(channel.subscribers.replace(/\D/g, "")) || 0;
@@ -289,18 +283,14 @@ const SuggestChannelsWithChannelUrl = () => {
           videoCount <= maxVidCnt;
       
         // Log filtering result for each channel
-        console.log(`Channel ID: ${channel.id}, Passes Filter: ${passesFilter}`);
         return passesFilter;
       });
       
       // Log filtered channels before limiting the count
-      console.log("Filtered Channels before limiting:", filteredChannels);
-      
       // Limit the number of filtered channels to the specified channelCount
       const limitedFilteredChannels = filteredChannels.slice(0, parseInt(channelCount) || filteredChannels.length);
       
       // Log final result
-      console.log("Final Filtered Channels:", limitedFilteredChannels);
       
       setSearchResults(limitedFilteredChannels);
       

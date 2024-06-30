@@ -27,7 +27,6 @@ const ChannelUrlInput = ({ inputValue, setInputValue, handleSearch }) => {
   };
 
   const handleSearchClick = () => {
-    console.log(inputValue);
     handleSearch(inputValue);
   };
 
@@ -79,7 +78,7 @@ const SuggestVideosWithChannelUrl = () => {
 
   const handleSearch = async (channelUrl) => {
     setLoading(true);
-    const API_KEY = "AIzaSyASFJquvesoqC9Yx06F0-Q1MswQfNJo8ZQ"
+    const API_KEY = process.env.GOOGLE_API_KEY_1 || process.env.GOOGLE_API_KEY_2
   
     try {
       let channelId;
@@ -100,8 +99,6 @@ const SuggestVideosWithChannelUrl = () => {
       } else {
         throw new Error("Invalid channel URL format");
       }
-  
-      console.log("Channel ID:", channelId);
   
       const fetchChannelPopularVideo = async (channelId) => {
         const response = await fetch(
@@ -147,7 +144,6 @@ const SuggestVideosWithChannelUrl = () => {
       };
   
       const channelPopularVideoData = await fetchChannelPopularVideo(channelId);
-      console.log("Channel Popular Video Data:", channelPopularVideoData);
   
       if (!channelPopularVideoData.items || channelPopularVideoData.items.length === 0) {
         throw new Error("No popular videos found for the channel");
@@ -172,13 +168,11 @@ const SuggestVideosWithChannelUrl = () => {
         publishedAt: videoDetails.snippet.publishedAt,
       };
   
-      console.log(videoInfo);
   
       const keywords = videoDetails.snippet.title.split(" ").join("+");
       const categoryId = videoDetails.snippet.categoryId;
   
       const relatedVideosData = await fetchRelatedVideos(keywords, categoryId);
-      console.log(relatedVideosData);
   
       if (!relatedVideosData.items || relatedVideosData.items.length === 0) {
         throw new Error("No related videos found");
